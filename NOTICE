@@ -1,0 +1,22 @@
+eth: a Lean 4 formalization of "A 2^o(n) Time Algorithm for 3-SAT"
+Copyright 2026 Anthropic, PBC
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The comments of the Lean files and the documents of this product quote statements and sentences of the paper named
+above, which lies in this folder as paper.pdf. The paper is included under the Apache License, Version 2.0.
+
+This product depends on, but does not include, Lean 4 (https://github.com/leanprover/lean4) and
+mathlib4 with its standard dependency set, fetched by the build tool from their public repositories at the
+revisions pinned in lake-manifest.json: batteries, aesop, Qq, ProofWidgets4, import-graph, LeanSearchClient and
+plausible are released under the Apache License, Version 2.0; Cli (leanprover/lean4-cli) is released under the
+MIT License (Copyright (c) 2021 mhuisi). None of these dependencies is included in this product.
+
+Modifications and additions in eth-constants
+Copyright 2026 Scott Armstrong
+
+Derived from anthropics/formal-math, eth directory, commit
+16a5ce41304fcdaea4e0be7c132e1c361dc26da5.
+The additions under Constants/ provide explicit constants and a certified
+full-assignment fallback cutoff for a modified counting program.
+Modified upstream files carry a notice; the complete list is in docs/UPSTREAM.md.

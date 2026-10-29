@@ -1,0 +1,59 @@
+name: Build and verify
+
+on:
+  push:
+    branches: [constants]
+  pull_request:
+    branches: [constants]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      LEAN_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Free runner disk space
+        run: |
+          set -Eeuo pipefail
+          if [[ "${RUNNER_ENVIRONMENT:-}" == github-hosted ]]; then
+            sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+            sudo docker image prune --all --force > /dev/null || true
+          fi
+          df -h .
+          available_kib="$(df -Pk . | awk 'NR==2 {print $4}')"
+          test "$available_kib" -ge 20971520
+      - name: Install pinned elan
+        run: |
+          set -Eeuo pipefail
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            --output "$RUNNER_TEMP/elan.tar.gz" \
+            https://github.com/leanprover/elan/releases/download/v4.2.3/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo "df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2  $RUNNER_TEMP/elan.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/elan"
+          tar -xzf "$RUNNER_TEMP/elan.tar.gz" -C "$RUNNER_TEMP/elan"
+          "$RUNNER_TEMP/elan/elan-init" -y --no-modify-path --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Fetch the pinned Mathlib cache
+        run: lake exe cache get
+      - name: Build and audit
+        run: python3 scripts/verify.py
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verification-logs
+          path: .lake/verification/
+          if-no-files-found: ignore
+          retention-days: 30

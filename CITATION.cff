@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "Please cite this repository for the explicit constants and cutoff; cite Anthropic's paper for the underlying algorithm."
+title: "Explicit constants for Anthropic's 3-SAT algorithm"
+authors:
+  - family-names: Armstrong
+    given-names: Scott
+type: software
+version: 0.1.0
+date-released: 2026-10-29
+license: Apache-2.0
+repository-code: "https://github.com/scottnarmstrong/eth-constants"
+url: "https://github.com/scottnarmstrong/eth-constants"
