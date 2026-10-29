@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -120,14 +122,16 @@ theorem one_le_k (hW : WfD k n D) (hm : 0 < D.1.length) : 1 ≤ k := by
 ≤ 3(k − 1)(n + log(2Δ)) bits. Needs 2 ≤ Δ, m ≤ Δn, the n̄ of the text, T₀ ≤ (k − 1)m and μ₀ ≤ (k − 1)(n̄ + 1),
 and the inequalities of «Setting and parameters». For k = 1, where μ' = 0 and display (59) does not
 apply, T₀ = μ₀ = 0 and the cost is 0. -/
-theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hnb : IsNb n Δ nb) (hT : T ≤ (k - 1) * m)
+theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hnb : IsNb n (scaleD Δ) nb) (hT : T ≤ (k - 1) * m)
     (hμ : μ ≤ (k - 1) * (nb + 1)) :
-    lg (T.choose μ) ≤ ((k - 1 : ℕ) : ℝ) * (nb + 1) * (3 * lg (2 * Δ)) ∧
-      ((k - 1 : ℕ) : ℝ) * (nb + 1) * (3 * lg (2 * Δ)) ≤ 3 * (k - 1 : ℕ) * (n + lg (2 * Δ)) := by
+    lg (T.choose μ) ≤ ((k - 1 : ℕ) : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) ∧
+      ((k - 1 : ℕ) : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) ≤ 3 * (k - 1 : ℕ) * (n + lg (2 * Δ)) := by
   obtain ⟨j, hj⟩ : ∃ j, j = k - 1 := ⟨_, rfl⟩
   rw [← hj] at hT hμ ⊢
   have hl := Ineq.two_le_lg hΔ
-  have hn := Ineq.nb_mul_le (by omega : 1 ≤ Δ) hnb
+  have hn := Ineq.nb_mul_le (Nat.succ_le_of_lt (by unfold scaleD; exact Nat.mul_pos (by norm_num) (pow_pos (by omega) _))) hnb
+  rw [Ineq.lg_two_scaleD] at hn
+  have hnb1 := Ineq.nb_pos hnb
   have hj0 : (0 : ℝ) ≤ j := Nat.cast_nonneg _
   refine ⟨?_, ?_⟩
   · rcases Nat.eq_zero_or_pos j with rfl | hjp
@@ -143,27 +147,28 @@ theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) 
         push_cast
         rw [div_le_div_iff₀ (by positivity) hnr]
         nlinarith [mul_le_mul_of_nonneg_right hT' hnr.le]
-      have h4 := hp.three_m n Δ m nb hΔ hm hnb
-      have h5 : lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ)) ≤ 3 * lg (2 * Δ) := by
-        have h6 : lg (((2 : ℝ) * Δ) ^ 3) = 3 * lg (2 * Δ) := by unfold lg; rw [Real.logb_pow]; norm_num
-        rw [← h6]
-        refine lg_le_lg (by positivity) (h3.trans (h4.1.le.trans h4.2)) ?_
-        have : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
-        exact one_le_pow₀ (by linarith)
-      have h7 : max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) ≤ 3 * lg (2 * Δ) := max_le (by linarith) h5
+      have h4 := (hp.sb_lt2 n Δ m nb hΔ hm hnb).2
+      have h5 : lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ)) ≤ 5 * lg (2 * Δ) := by
+        have hs := Ineq.lg_two_scaleD Δ
+        have hΔr : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
+        have h1z : (1 : ℝ) ≤ 6 * Δ * lg (2 * scaleD Δ) := by rw [hs]; nlinarith
+        exact (lg_le_lg (by positivity) (h3.trans h4.le) h1z).trans (Ineq.lg_six_le hΔ)
+      have h7 : max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) ≤ 5 * lg (2 * Δ) := max_le (by linarith) h5
       calc lg (T.choose μ) ≤ ((j * (nb + 1) : ℕ) : ℝ) * max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) := h2
-        _ ≤ ((j * (nb + 1) : ℕ) : ℝ) * (3 * lg (2 * Δ)) := mul_le_mul_of_nonneg_left h7 (Nat.cast_nonneg _)
-        _ = (j : ℝ) * (nb + 1) * (3 * lg (2 * Δ)) := by push_cast; ring
-  · have : (j : ℝ) * ((nb : ℝ) * lg (2 * Δ)) ≤ j * n := mul_le_mul_of_nonneg_left hn hj0
+        _ ≤ ((j * (nb + 1) : ℕ) : ℝ) * (5 * lg (2 * Δ)) := mul_le_mul_of_nonneg_left h7 (Nat.cast_nonneg _)
+        _ = (j : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) := by push_cast; ring
+  · have h1 : (j : ℝ) * ((nb : ℝ) * (32 * lg (2 * Δ))) ≤ j * n := mul_le_mul_of_nonneg_left hn hj0
+    have h2 : (j : ℝ) * (32 * lg (2 * Δ)) ≤ j * ((nb : ℝ) * (32 * lg (2 * Δ))) :=
+      mul_le_mul_of_nonneg_left (le_mul_of_one_le_left (by linarith) hnb1) hj0
     nlinarith
 
 /-- Step 3, «The total»: «With μ' = kM and 3T₁/μ' ≤ 3s̄ (as r ≤ M), kind 1 costs at most kM·log(3s̄)
 bits», where s̄ = 16m/n̄; this is at most kM·log(96Δ·log(2Δ)), as 3s̄ < 96Δ·log(2Δ). Needs 2 ≤ Δ, n̄
 < m ≤ Δn, the n̄ of the text, k ≥ 1, r ≤ M, M ≥ 1,
 I ≤ r·s̄ (as n̄·I ≤ r·16m), T₁ ≤ kI and μ₁ ≤ kM, and the inequalities of «Setting and parameters». -/
-theorem kind_one_le (hp : ParamIneq) {k n Δ m nb M r I T μ : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (hnb : IsNb n Δ nb) (hk : 1 ≤ k) (hr : r ≤ M)
+theorem kind_one_le (hp : ParamIneq) {k n Δ m nb M r I T μ : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (hnb : IsNb n (scaleD Δ) nb) (hk : 1 ≤ k) (hr : r ≤ M)
     (hM : 1 ≤ M) (hI : nb * I ≤ r * (16 * m)) (hT : T ≤ k * I) (hμ : μ ≤ k * M) :
-    lg (T.choose μ) ≤ k * M * lg (3 * (16 * m / nb)) ∧ (k : ℝ) * M * lg (3 * (16 * m / nb)) ≤ k * M * lg (96 * Δ * lg (2 * Δ)) := by
+    lg (T.choose μ) ≤ k * M * lg (3 * (16 * m / nb)) ∧ (k : ℝ) * M * lg (3 * (16 * m / nb)) ≤ k * M * lg (96 * Δ * lg (2 * scaleD Δ)) := by
   have hnb1 : (1 : ℝ) ≤ nb := Ineq.nb_pos hnb
   have hnb0 : (0 : ℝ) < nb := by linarith
   have hkr : (0 : ℝ) < k := by exact_mod_cast hk
@@ -196,7 +201,7 @@ theorem kind_one_le (hp : ParamIneq) {k n Δ m nb M r I T μ : ℕ} (hΔ : 2 ≤
     calc lg (T.choose μ) ≤ ((k * M : ℕ) : ℝ) * max 1 (lg (3 * (T : ℝ) / ((k * M : ℕ) : ℝ))) := h2
       _ ≤ ((k * M : ℕ) : ℝ) * lg (3 * (16 * m / nb)) := mul_le_mul_of_nonneg_left (max_le h6 h5) (Nat.cast_nonneg _)
       _ = k * M * lg (3 * (16 * m / nb)) := by push_cast; ring
-  · have h4 := (hp.sb_lt n Δ m nb hΔ hm hnb).2
+  · have h4 := (hp.sb_lt2 n Δ m nb hΔ hm hnb).1
     refine mul_le_mul_of_nonneg_left (lg_le_lg (by linarith) (by linarith) (by linarith)) (by positivity)
 
 /-- Step 3, «The total», «Adding two roundings per pair»: for each kind one rounding per pair,
@@ -264,13 +269,14 @@ theorem stUPrinted (h : StU) : StUPrinted := by
   have h1 := h k g n Δ nb M D fl y hg hS hadm
   have hl := Ineq.two_le_lg hS.two
   have hΔ : (2 : ℝ) ≤ Δ := by exact_mod_cast hS.two
-  have hL : 0 ≤ lg (96 * Δ * lg (2 * Δ)) := Real.logb_nonneg (by norm_num) (by nlinarith)
+  have hs := Ineq.lg_two_scaleD Δ
+  have hL : 0 ≤ lg (96 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by rw [hs]; nlinarith)
   have hn : (0 : ℝ) ≤ n := Nat.cast_nonneg _
   have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg _
   have hk : ((k - 1 : ℕ) : ℝ) ≤ k := by exact_mod_cast Nat.sub_le k 1
   have hM' : (M : ℝ) ≤ 14 * n := by exact_mod_cast hM
   have e1 : ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) ≤ k * (n + lg (2 * Δ)) := mul_le_mul_of_nonneg_right hk (by linarith)
-  have e2 : (k : ℝ) * M * lg (96 * Δ * lg (2 * Δ)) ≤ k * (14 * n) * lg (96 * Δ * lg (2 * Δ)) :=
+  have e2 : (k : ℝ) * M * lg (96 * Δ * lg (2 * scaleD Δ)) ≤ k * (14 * n) * lg (96 * Δ * lg (2 * scaleD Δ)) :=
     mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hM' hk0) hL
   linarith
 

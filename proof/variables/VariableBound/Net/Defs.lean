@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -302,70 +302,39 @@ structure Setting (k n Δ nb M : ℕ) (D : Dat) : Prop where
   two : 2 ≤ Δ
   occ_le : ∀ v, (occ D.1 v).length ≤ Δ
   m_le : D.1.length ≤ Δ * n
-  isNb : AppVariables.IsNb n Δ nb
+  isNb : AppVariables.IsNb n (scaleD Δ) nb
   lt_m : nb < D.1.length
   r_le : D.2.length ≤ M
   one_le : 1 ≤ M
   row : ∀ L ∈ D.2, nb * L.length ≤ 16 * D.1.length
 
 /-- Display (68), before display (61) is used: for g > 0, in the setting of Step 3 for m > n̄
-(`Setting`), the network of an admissible profile has U ≤ 6(k−1)(n + log(2Δ)) + 2kM·log(96Δ·log(2Δ)) +
-2g². -/
+(`Setting`, with n̄ chosen for `scaleD Δ`), the network of an admissible profile has U ≤
+6(k−1)(n + log(2Δ)) + 2kM·log(96Δ·log(2·scaleD Δ)) + 2g². -/
 def StU : Prop := ∀ (k g n Δ nb M : ℕ) (D : Dat) (fl : Bool) (y : ℕ), 0 < g → Setting k n Δ nb M D → admD k g n nb M D fl y = true →
   ((netDN g (ctx g n D y fl)).U : ℝ) ≤
-    6 * (k - 1 : ℕ) * (n + lg (2 * Δ)) + 2 * k * M * lg (96 * Δ * lg (2 * Δ)) + 2 * g ^ 2
+    6 * (k - 1 : ℕ) * (n + lg (2 * Δ)) + 2 * k * M * lg (96 * Δ * lg (2 * scaleD Δ)) + 2 * g ^ 2
 
-/-- Display (68) as printed, with M ≤ 14n from display (61): for g > 0, in the setting of Step 3 for
-m > n̄ (`Setting`), the network of an admissible profile has U ≤ 6k(n + log(2Δ)) +
-28kn·log(96Δ·log(2Δ)) + 2g². -/
+/-- Display (68) with M ≤ 14n from display (61): for g > 0, in the setting of Step 3 for m > n̄
+(`Setting`), the network of an admissible profile has U ≤ 6k(n + log(2Δ)) +
+28kn·log(96Δ·log(2·scaleD Δ)) + 2g². -/
 def StUPrinted : Prop := ∀ (k g n Δ nb M : ℕ) (D : Dat) (fl : Bool) (y : ℕ), 0 < g → Setting k n Δ nb M D → M ≤ 14 * n → admD k g n nb M D fl y = true →
-  ((netDN g (ctx g n D y fl)).U : ℝ) ≤ 6 * k * (n + lg (2 * Δ)) + 28 * k * n * lg (96 * Δ * lg (2 * Δ)) + 2 * g ^ 2
+  ((netDN g (ctx g n D y fl)).U : ℝ) ≤ 6 * k * (n + lg (2 * Δ)) + 28 * k * n * lg (96 * Δ * lg (2 * scaleD Δ)) + 2 * g ^ 2
 
-/-- ⌈log(96Δ·⌈log(2Δ)⌉)⌉: an upper bound for the number of bits of one mark of a check. -/
-def lgD (Δ : ℕ) : ℕ := Nat.clog 2 (96 * Δ * LD Δ)
+/-- ⌈log(96Δ·⌈log(2·scaleD Δ)⌉)⌉: an upper bound for the number of bits of one mark of a check. -/
+def lgD (Δ : ℕ) : ℕ := Nat.clog 2 (96 * Δ * LD (scaleD Δ))
 
-/-- The bits of the marks of the checks, per variable: M·⌈log(96Δ·log(2Δ))⌉ ≤ `markD Δ`·n. The
-marks are at most 8n for Δ ≥ 2^21, at most 9n for Δ ≥ 2^10, and at most 14n otherwise, as in
-display (61). The cut-off arguments make `markD` grow with Δ. -/
-def markD (Δ : ℕ) : ℕ := max (8 * lgD Δ) (max (9 * lgD (min Δ (2 ^ 21))) (14 * lgD (min Δ (2 ^ 10))))
+/-- Display (68) with the logarithms rounded up and M ≤ 4.5n marks of the checks, on g = 3K⁸
+nodes: a number that can be computed and does not depend on the formula. -/
+def UbD (k K n Δ : ℕ) : ℕ := 6 * k * (n + LD Δ) + 9 * k * n * lgD Δ + 2 * (3 * K ^ 8) ^ 2
 
-/-- Display (68) with the logarithms rounded up and the marks bounded by `markD`, on g = 3K⁸ nodes:
-a number that can be computed and does not depend on the formula. -/
-def UbD (k K n Δ : ℕ) : ℕ := 6 * k * (n + LD Δ) + 2 * k * n * markD Δ + 2 * (3 * K ^ 8) ^ 2
+/-- `scaleD` grows with Δ. -/
+theorem scaleD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : scaleD Δ ≤ scaleD Δ' :=
+  Nat.mul_le_mul_left _ (Nat.pow_le_pow_left h 32)
 
 /-- `lgD` grows with Δ. -/
 theorem lgD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : lgD Δ ≤ lgD Δ' :=
-  Nat.clog_mono_right 2 (Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 h)))
-
-/-- `markD` grows with Δ. -/
-theorem markD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : markD Δ ≤ markD Δ' :=
-  max_le_max (Nat.mul_le_mul_left 8 (lgD_mono h)) (max_le_max (Nat.mul_le_mul_left 9 (lgD_mono (min_le_min h le_rfl)))
-    (Nat.mul_le_mul_left 14 (lgD_mono (min_le_min h le_rfl))))
-
-/-- `markD Δ` ≤ 14·`lgD Δ`, the bound with M ≤ 14n. -/
-theorem markD_le (Δ : ℕ) : markD Δ ≤ 14 * lgD Δ :=
-  max_le (by omega) (max_le ((Nat.mul_le_mul_left 9 (lgD_mono (min_le_left _ _))).trans (by omega))
-    (Nat.mul_le_mul_left 14 (lgD_mono (min_le_left _ _))))
-
-/-- The bits of M marks are at most `markD Δ`·n, if M ≤ 14n, M ≤ 9n for Δ ≥ 2^10 and M ≤ 8n for
-Δ ≥ 2^21. -/
-theorem mark_le {M n Δ : ℕ} (h14 : M ≤ 14 * n) (h9 : 2 ^ 10 ≤ Δ → M ≤ 9 * n) (h8 : 2 ^ 21 ≤ Δ → M ≤ 8 * n) :
-    M * lgD Δ ≤ markD Δ * n := by
-  have key : ∀ c : ℕ, M ≤ c * n → c * lgD Δ ≤ markD Δ → M * lgD Δ ≤ markD Δ * n := fun c hM h =>
-    calc M * lgD Δ ≤ c * n * lgD Δ := Nat.mul_le_mul_right _ hM
-      _ = c * lgD Δ * n := Nat.mul_right_comm c n (lgD Δ)
-      _ ≤ markD Δ * n := Nat.mul_le_mul_right _ h
-  rcases Nat.lt_or_ge Δ (2 ^ 10) with hlt | hge
-  · refine key 14 h14 ?_
-    unfold markD
-    rw [min_eq_left hlt.le]
-    exact (le_max_right _ _).trans (le_max_right _ _)
-  rcases Nat.lt_or_ge Δ (2 ^ 21) with hlt' | hge'
-  · refine key 9 (h9 hge) ?_
-    unfold markD
-    rw [min_eq_left hlt'.le]
-    exact (le_max_left _ _).trans (le_max_right _ _)
-  · exact key 8 (h8 hge') (le_max_left _ _)
+  Nat.clog_mono_right 2 (Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 (scaleD_mono h))))
 
 /-- P₀ = ⌈n/g⌉(1 + Δ(t̄ + 3)) + ⌈r̄/g⌉·s̄. -/
 def P0 (g n Δ tb rb : ℕ) (sb : ℚ) : ℚ := (qv g n : ℚ) * (1 + Δ * (tb + 3)) + (qv g rb : ℚ) * sb
@@ -389,11 +358,11 @@ with P = ⌈2P₀⌉. -/
 def StP : Prop := ∀ (g n Δ tb rb : ℕ) (sb : ℚ), 0 < g → 0 ≤ sb → rb ≤ 10 * n →
   ((g * PD g n Δ tb rb sb : ℕ) : ℚ) ≤ 2 * (n + g) * (1 + Δ * (tb + 3)) + 2 * (10 * n + g) * sb + g
 
-/-- Bounds for t̄ and s̄ that do not depend on the formula: t̄ ≤ log m + 33·log(2Δ) + 1 with m ≤ Δn,
-and s̄ < 32Δ·log(2Δ). -/
-def tbMax (n Δ : ℕ) : ℕ := Nat.clog 2 (Δ * n) + 33 * LD Δ + 1
-/-- The bound for s̄: 32Δ·⌈log(2Δ)⌉. -/
-def sbMax (Δ : ℕ) : ℕ := 32 * Δ * LD Δ
+/-- Bounds for t̄ and s̄ that do not depend on the formula: t̄ ≤ log m + 33·log(2·scaleD Δ) + 1 with
+m ≤ Δn, and s̄ < 32Δ·log(2·scaleD Δ). -/
+def tbMax (n Δ : ℕ) : ℕ := Nat.clog 2 (Δ * n) + 33 * LD (scaleD Δ) + 1
+/-- The bound for s̄: 32Δ·⌈log(2·scaleD Δ)⌉. -/
+def sbMax (Δ : ℕ) : ℕ := 32 * Δ * LD (scaleD Δ)
 
 /-- P = ⌈2P₀⌉ on g = 3K⁸ nodes with r̄ = 10n, t̄ = `tbMax` and s̄ = `sbMax`: it does not depend on
 the formula. -/
@@ -402,8 +371,8 @@ def PbD (K n Δ : ℕ) : ℕ := PD (3 * K ^ 8) n Δ (tbMax n Δ) (10 * n) (sbMax
 def BbD (k n : ℕ) : ℕ := BD k (14 * n)
 
 /-- What one evaluation asks: ψ and the checks are well formed (WfD), every variable lies in at most
-Δ ≥ 2 clauses, m ≤ Δn, n̄ is the number of the text (AppVariables.IsNb), M ≤ 14n with the marks
-bounded by `markD`, the list has r ≤
+Δ ≥ 2 clauses, m ≤ Δn, n̄ is the number of the text for `scaleD Δ` (AppVariables.IsNb), M ≤ 14n and
+2M ≤ 9n, the list has r ≤
 10n checks, and load(E) ≤ `tbMax` + 2 for
 every clause. Further, either m > n̄, and then r ≤ M, M ≥ 1 and |Λ_j| ≤ 16m/n̄ for every j (display (67)
 with the bounds of display (61)), or m ≤ n̄ and the list is empty. -/
@@ -412,22 +381,22 @@ structure Fit (k n Δ nb M : ℕ) (D : Dat) : Prop where
   two : 2 ≤ Δ
   occ_le : ∀ v, (occ D.1 v).length ≤ Δ
   m_le : D.1.length ≤ Δ * n
-  isNb : AppVariables.IsNb n Δ nb
+  isNb : AppVariables.IsNb n (scaleD Δ) nb
   M_le : M ≤ 14 * n
-  mark_le : M * lgD Δ ≤ markD Δ * n
+  mark_le : 2 * M ≤ 9 * n
   r_le : D.2.length ≤ 10 * n
   col : ∀ e < D.1.length, colD D e ≤ tbMax n Δ + 2
   big : nb < D.1.length → D.2.length ≤ M ∧ 1 ≤ M ∧ ∀ L ∈ D.2, nb * L.length ≤ 16 * D.1.length
   small : D.1.length ≤ nb → D.2 = []
 
-/-- t̄ ≤ log m + 33·log(2Δ) + 1 gives t̄ ≤ `tbMax`, for 1 ≤ m ≤ Δn. -/
-def StTbMax : Prop := ∀ n Δ m tb : ℕ, 1 ≤ m → m ≤ Δ * n → (tb : ℝ) ≤ lg m + 33 * lg (2 * Δ) + 1 → tb ≤ tbMax n Δ
+/-- t̄ ≤ log m + 33·log(2·scaleD Δ) + 1 gives t̄ ≤ `tbMax`, for 1 ≤ m ≤ Δn. -/
+def StTbMax : Prop := ∀ n Δ m tb : ℕ, 1 ≤ m → m ≤ Δ * n → (tb : ℝ) ≤ lg m + 33 * lg (2 * scaleD Δ) + 1 → tb ≤ tbMax n Δ
 
 /-- For a formula ψ with clauses of 1 to k literals on variables below n, every variable in at most
 Δ ≥ 2 clauses, m ≤ Δn, n̄ the number of the text and M ≤ 14n: if m > n̄, a list with display (67)
 for r̄ ≤ 10n, r̄ ≤ M,
 1 ≤ M and t̄ ≤ `tbMax` is fit for an evaluation; if m ≤ n̄, the empty list is. -/
-def StFit : Prop := ∀ (k n Δ nb rb tb M : ℕ) (ψ : Fml) (L : List (List ℕ)), WfL k n [ψ] → 2 ≤ Δ → (∀ v, (occ ψ v).length ≤ Δ) → ψ.length ≤ Δ * n → AppVariables.IsNb n Δ nb → M ≤ 14 * n → M * lgD Δ ≤ markD Δ * n →
+def StFit : Prop := ∀ (k n Δ nb rb tb M : ℕ) (ψ : Fml) (L : List (List ℕ)), WfL k n [ψ] → 2 ≤ Δ → (∀ v, (occ ψ v).length ≤ Δ) → ψ.length ≤ Δ * n → AppVariables.IsNb n (scaleD Δ) nb → M ≤ 14 * n → 2 * M ≤ 9 * n →
   (nb < ψ.length → StructD ψ.length nb rb tb L → rb ≤ 10 * n → rb ≤ M → 1 ≤ M → tb ≤ tbMax n Δ → Fit k n Δ nb M (ψ, L)) ∧ (ψ.length ≤ nb → Fit k n Δ nb M (ψ, []))
 
 /-- «The total» and «The parameters» with bounds that do not depend on the formula, the case m ≤ n̄

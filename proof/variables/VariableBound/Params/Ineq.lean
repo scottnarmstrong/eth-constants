@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -165,50 +165,84 @@ theorem large {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ �
       linarith
     exact_mod_cast this
 
-/-- log(3x) ≤ x/2 for x ≥ 11, from log y ≤ y − 1 at y = 3x/32. -/
-theorem lg_three_mul_le {x : ℝ} (hx : 11 ≤ x) : lg (3 * x) ≤ x / 2 := by
+/-- log(96x) ≤ 4x for x ≥ 2, from log y ≤ y − 1 at y = x/2. -/
+theorem lg_ninety_six_le {x : ℝ} (hx : 2 ≤ x) : lg (96 * x) ≤ 4 * x := by
   have hl2 := Real.log_two_gt_d9
-  have h0 : (0 : ℝ) < 3 * x / 32 := by positivity
+  have h0 : (0 : ℝ) < x / 2 := by positivity
   have h1 := Real.log_le_sub_one_of_pos h0
-  have h2 : Real.log (3 * x) = 5 * Real.log 2 + Real.log (3 * x / 32) := by
-    rw [show (3 : ℝ) * x = 2 ^ 5 * (3 * x / 32) by ring, Real.log_mul (by norm_num) h0.ne', Real.log_pow]
-    norm_num
-  have h3 : 3 * x / 32 - 1 ≤ (x / 2 - 5) * Real.log 2 := by nlinarith
+  have h192 : Real.log 192 ≤ 8 * Real.log 2 := by
+    rw [← Real.log_rpow (by norm_num)]
+    exact Real.log_le_log (by norm_num) (by norm_num)
+  have h2 : Real.log (96 * x) = Real.log 192 + Real.log (x / 2) := by
+    rw [← Real.log_mul (by norm_num) h0.ne']
+    ring_nf
+  have h3 : x / 2 - 1 ≤ 8 * Real.log 2 * (x / 2 - 1) := by nlinarith
   unfold lg
   rw [Real.logb, div_le_iff₀ (by linarith), h2]
   nlinarith
 
-/-- log(3x) ≤ 0.28·x for x ≥ 22, from log y ≤ y − 1 at y = 3x/64. -/
-theorem lg_three_mul_le' {x : ℝ} (hx : 22 ≤ x) : lg (3 * x) ≤ 7 / 25 * x := by
-  have hl2 := Real.log_two_gt_d9
-  have h0 : (0 : ℝ) < 3 * x / 64 := by positivity
-  have h1 := Real.log_le_sub_one_of_pos h0
-  have h2 : Real.log (3 * x) = 6 * Real.log 2 + Real.log (3 * x / 64) := by
-    rw [show (3 : ℝ) * x = 2 ^ 6 * (3 * x / 64) by ring, Real.log_mul (by norm_num) h0.ne', Real.log_pow]
-    norm_num
-  have h3 : 3 * x / 64 - 1 ≤ (7 / 25 * x - 6) * Real.log 2 := by nlinarith
+/-- 1 ≤ scaleD Δ for 1 ≤ Δ. -/
+theorem one_le_scaleD {Δ : ℕ} (hΔ : 1 ≤ Δ) : 1 ≤ scaleD Δ :=
+  Nat.succ_le_of_lt (Nat.mul_pos (by norm_num) (pow_pos (by omega) _))
+
+/-- 2 ≤ scaleD Δ for 1 ≤ Δ. -/
+theorem two_le_scaleD {Δ : ℕ} (hΔ : 1 ≤ Δ) : 2 ≤ scaleD Δ :=
+  le_trans (by norm_num : 2 ≤ 2 ^ 31) (Nat.le_mul_of_pos_right _ (pow_pos (by omega) _))
+
+/-- 2·scaleD Δ = (2Δ)^32. -/
+theorem two_scaleD (Δ : ℕ) : 2 * scaleD Δ = (2 * Δ) ^ 32 := by
+  unfold scaleD
+  ring
+
+/-- log(2·scaleD Δ) = 32·log(2Δ). -/
+theorem lg_two_scaleD (Δ : ℕ) : lg (2 * (scaleD Δ : ℝ)) = 32 * lg (2 * Δ) := by
+  have h : (2 : ℝ) * (scaleD Δ : ℝ) = (2 * Δ) ^ 32 := by exact_mod_cast two_scaleD Δ
+  rw [h]
   unfold lg
-  rw [Real.logb, div_le_iff₀ (by linarith), h2]
+  rw [Real.logb_pow]
+  norm_num
+
+/-- log(6Δ·log(2·scaleD Δ)) = log(2Δ) + log(96·log(2Δ)) ≤ 5·log(2Δ), for Δ ≥ 2. -/
+theorem lg_six_le {Δ : ℕ} (hΔ2 : 2 ≤ Δ) : lg (6 * Δ * lg (2 * scaleD Δ)) ≤ 5 * lg (2 * Δ) := by
+  have hL := two_le_lg hΔ2
+  have hΔ0 : (0 : ℝ) < 2 * Δ := by
+    have : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ2
+    linarith
+  have h6 : lg (6 * Δ * lg (2 * scaleD Δ)) = lg (2 * Δ) + lg (96 * lg (2 * Δ)) := by
+    rw [lg_two_scaleD]
+    unfold lg
+    rw [show (6 : ℝ) * Δ * (32 * Real.logb 2 (2 * Δ)) = (2 * Δ) * (96 * Real.logb 2 (2 * Δ)) by ring,
+      Real.logb_mul hΔ0.ne' (by unfold lg at hL; positivity)]
+  rw [h6]
+  linarith [lg_ninety_six_le hL]
+
+/-- m/n̄ < 2Δ·log(2Δ'), for 1 ≤ Δ, m ≤ Δ·n and n̄ chosen for Δ'. -/
+theorem m_div_lt' {n Δ Δ' m nb : ℕ} (hΔ : 1 ≤ Δ) (hm : m ≤ Δ * n) (h : IsNb n Δ' nb) : (m : ℝ) / nb < 2 * Δ * lg (2 * Δ') := by
+  have hnb := nb_pos h
+  have h1 := lt_nb_mul h
+  have h2 : (m : ℝ) ≤ Δ * n := by exact_mod_cast hm
+  have h3 : (0 : ℝ) < Δ := by exact_mod_cast (by omega : 0 < Δ)
+  rw [div_lt_iff₀ (by linarith)]
   nlinarith
 
-/-- a + 1 ≤ log(2Δ) for 2^a ≤ Δ. -/
-theorem lg_ge_of_pow_le {a Δ : ℕ} (h : 2 ^ a ≤ Δ) : (a + 1 : ℝ) ≤ lg (2 * Δ) := by
-  have h1 : (2 : ℝ) ^ (a + 1) ≤ 2 * Δ := by
-    have : ((2 ^ (a + 1) : ℕ) : ℝ) ≤ ((2 * Δ : ℕ) : ℝ) := by exact_mod_cast (by rw [pow_succ]; omega : 2 ^ (a + 1) ≤ 2 * Δ)
-    push_cast at this
-    exact this
-  have h2 := Real.logb_le_logb_of_le (b := 2) (by norm_num) (by positivity) h1
-  rw [Real.logb_pow, Real.logb_self_eq_one (by norm_num), mul_one] at h2
-  unfold lg
-  push_cast at h2
-  exact h2
+/-- 16m/n̄ < 32Δ·log(2·scaleD Δ) and 3m/(n̄+1) < 6Δ·log(2·scaleD Δ), for 2 ≤ Δ, m ≤ Δ·n and n̄
+chosen for `scaleD Δ`. -/
+theorem sb_lt2 {n Δ m nb : ℕ} (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (h : IsNb n (scaleD Δ) nb) :
+    16 * (m : ℝ) / nb < 32 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ) := by
+  have hnb := nb_pos h
+  have h1 := m_div_lt' (by omega) hm h
+  have h2 : (m : ℝ) / (nb + 1) ≤ m / nb := div_le_div_of_nonneg_left (Nat.cast_nonneg m) (by linarith) (by linarith)
+  refine ⟨?_, ?_⟩
+  · rw [mul_div_assoc]
+    linarith
+  · rw [mul_div_assoc]
+    linarith
 
-/-- β ≤ (2 + c)·n + (1 + c)·log(2Δ) + 2, for 2 ≤ Δ, n̄ < m ≤ Δ·n and log(3·log(2Δ)) ≤ c·log(2Δ):
-the bound of display (59) with log(3m/(n̄+1)) ≤ log(6Δ·log(2Δ)) ≤ (1 + c)·log(2Δ) in place of
-3·log(2Δ). -/
-theorem beta_le_of {n Δ m nb : ℕ} {c : ℝ} (hc : 0 ≤ c) (hΔ2 : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n Δ nb)
-    (hlog : lg (3 * lg (2 * Δ)) ≤ c * lg (2 * Δ)) :
-    (beta n m nb : ℝ) ≤ (2 + c) * n + (1 + c) * lg (2 * Δ) + 2 := by
+/-- β ≤ (37/32)·n + 5·log(2Δ) + 2, for 2 ≤ Δ, n̄ < m ≤ Δ·n and n̄ chosen for `scaleD Δ`: by display
+(59), log(3m/(n̄+1)) ≤ log(6Δ·log(2·scaleD Δ)) = log(2Δ) + log(96·log(2Δ)) ≤ 5·log(2Δ), and
+n̄·32·log(2Δ) ≤ n. -/
+theorem beta_le_scaled {n Δ m nb : ℕ} (hΔ2 : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n (scaleD Δ) nb) :
+    (beta n m nb : ℝ) ≤ 37 / 32 * n + 5 * lg (2 * Δ) + 2 := by
   have hL := two_le_lg hΔ2
   have hc' := ClauseBound.ParityChecks.Binom.clog_le_logb_add_one (x := m.choose (nb + 1)) (Nat.choose_pos hnm)
   have hb : Real.logb 2 (m.choose (nb + 1)) ≤ ((nb + 1 : ℕ) : ℝ) * max 1 (Real.logb 2 (3 * m / ((nb + 1 : ℕ) : ℝ))) :=
@@ -219,53 +253,53 @@ theorem beta_le_of {n Δ m nb : ℕ} {c : ℝ} (hc : 0 ≤ c) (hΔ2 : 2 ≤ Δ) 
   have hΔ0 : (0 : ℝ) < 2 * Δ := by
     have : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ2
     linarith
-  have h6 : lg (6 * Δ * lg (2 * Δ)) = lg (2 * Δ) + lg (3 * lg (2 * Δ)) := by
+  have hS := lg_two_scaleD Δ
+  have h6 : lg (6 * Δ * lg (2 * scaleD Δ)) = lg (2 * Δ) + lg (96 * lg (2 * Δ)) := by
+    rw [hS]
     unfold lg
-    rw [show (6 : ℝ) * Δ * Real.logb 2 (2 * Δ) = (2 * Δ) * (3 * Real.logb 2 (2 * Δ)) by ring,
-      Real.logb_mul hΔ0.ne' (by unfold lg at hL; linarith)]
-  have h3 : Real.logb 2 (3 * m / (nb + 1)) ≤ (1 + c) * lg (2 * Δ) := by
-    have h4 := Real.logb_le_logb_of_le (b := 2) (by norm_num) h0 (three_m_lt hΔ2 hm h).le
-    unfold lg at h4 h6 hlog ⊢
-    nlinarith
-  have h5 : max 1 (Real.logb 2 (3 * m / (nb + 1))) ≤ (1 + c) * lg (2 * Δ) := max_le (by nlinarith) h3
-  have h7 : ((nb + 1 : ℕ) : ℝ) * max 1 (Real.logb 2 (3 * m / ((nb + 1 : ℕ) : ℝ))) ≤ (nb + 1) * ((1 + c) * lg (2 * Δ)) := by
+    rw [show (6 : ℝ) * Δ * (32 * Real.logb 2 (2 * Δ)) = (2 * Δ) * (96 * Real.logb 2 (2 * Δ)) by ring,
+      Real.logb_mul hΔ0.ne' (by unfold lg at hL; positivity)]
+  have h96 := lg_ninety_six_le hL
+  have h3 : Real.logb 2 (3 * m / (nb + 1)) ≤ 5 * lg (2 * Δ) := by
+    have h4 := Real.logb_le_logb_of_le (b := 2) (by norm_num) h0 (sb_lt2 hΔ2 hm h).2.le
+    unfold lg at h4 h6 h96 ⊢
+    linarith
+  have h5 : max 1 (Real.logb 2 (3 * m / (nb + 1))) ≤ 5 * lg (2 * Δ) := max_le (by linarith) h3
+  have h7 : ((nb + 1 : ℕ) : ℝ) * max 1 (Real.logb 2 (3 * m / ((nb + 1 : ℕ) : ℝ))) ≤ (nb + 1) * (5 * lg (2 * Δ)) := by
     push_cast
     exact mul_le_mul_of_nonneg_left h5 (by positivity)
-  have h8 := mul_le_mul_of_nonneg_left (nb_mul_le (by omega) h) (by linarith : (0 : ℝ) ≤ 1 + c)
+  have h8 := nb_mul_le (Nat.succ_le_of_lt (by unfold scaleD; exact Nat.mul_pos (by norm_num) (pow_pos (by omega) _))) h
+  rw [hS] at h8
   unfold beta
   push_cast
   nlinarith
 
-/-- M ≤ 9n for 2^10 ≤ Δ, n̄ < m ≤ Δ·n, the r̄ of the text and n ≥ 29·log(2Δ) + 19. -/
-theorem large_nine {n Δ m nb rb : ℕ} (hΔ : 2 ^ 10 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n Δ nb) (hr : IsRb (beta n m nb) rb)
-    (hn : 29 * lg (2 * Δ) + 19 ≤ n) : Mb (beta n m nb) rb ≤ 9 * n := by
-  have hL := lg_ge_of_pow_le hΔ
-  push_cast at hL
-  have h1 := beta_le_of (c := 1 / 2) (by norm_num) (le_trans (by norm_num) hΔ) hnm hm h
-    ((lg_three_mul_le (by linarith)).trans_eq (by ring))
+/-- r̄ ≤ 10n, M ≤ 14n and 2M ≤ 9n, for 2 ≤ Δ, n̄ < m ≤ Δ·n, n̄ chosen for `scaleD Δ`, the r̄ of the
+text and n ≥ 64·log(2Δ) + 19. -/
+theorem large_half {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n (scaleD Δ) nb) (hr : IsRb (beta n m nb) rb)
+    (hn : 64 * lg (2 * Δ) + 19 ≤ n) : rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 9 * n := by
+  have hL := two_le_lg hΔ
+  have h1 := beta_le_scaled hΔ hnm hm h
   have h2 := rb_le hr
   have hβ : 1 ≤ beta n m nb := by unfold beta; omega
-  have : ((Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((9 * n : ℕ) : ℝ) := by
-    unfold Mb
-    rw [Nat.cast_sub (by omega)]
-    push_cast
-    linarith
-  exact_mod_cast this
-
-/-- M ≤ 8n for 2^21 ≤ Δ, n̄ < m ≤ Δ·n, the r̄ of the text and n ≥ 29·log(2Δ) + 19. -/
-theorem large_eight {n Δ m nb rb : ℕ} (hΔ : 2 ^ 21 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n Δ nb) (hr : IsRb (beta n m nb) rb)
-    (hn : 29 * lg (2 * Δ) + 19 ≤ n) : Mb (beta n m nb) rb ≤ 8 * n := by
-  have hL := lg_ge_of_pow_le hΔ
-  push_cast at hL
-  have h1 := beta_le_of (c := 7 / 25) (by norm_num) (le_trans (by norm_num) hΔ) hnm hm h (lg_three_mul_le' (by linarith))
-  have h2 := rb_le hr
-  have hβ : 1 ≤ beta n m nb := by unfold beta; omega
-  have : ((Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((8 * n : ℕ) : ℝ) := by
-    unfold Mb
-    rw [Nat.cast_sub (by omega)]
-    push_cast
-    linarith
-  exact_mod_cast this
+  refine ⟨?_, ?_, ?_⟩
+  · have : (rb : ℝ) ≤ ((10 * n : ℕ) : ℝ) := by
+      push_cast
+      linarith
+    exact_mod_cast this
+  · have : ((Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((14 * n : ℕ) : ℝ) := by
+      unfold Mb
+      rw [Nat.cast_sub (by omega)]
+      push_cast
+      linarith
+    exact_mod_cast this
+  · have : ((2 * Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((9 * n : ℕ) : ℝ) := by
+      unfold Mb
+      push_cast
+      rw [Nat.cast_sub (by omega)]
+      push_cast
+      linarith
+    exact_mod_cast this
 
 /-- p·r̄ < 22·log(2Δ), for 2 ≤ Δ and any number r̄ ≤ 10n. -/
 theorem p_rb {n Δ nb rb : ℕ} (hΔ : 2 ≤ Δ) (h : IsNb n Δ nb) (hr : rb ≤ 10 * n) : ((pp nb : ℚ) : ℝ) * rb < 22 * lg (2 * Δ) := by
@@ -328,8 +362,8 @@ theorem paramIneq : ParamIneq where
   beta_le n Δ m nb hΔ hnm hm h := ⟨Ineq.beta_le₁ hΔ hnm hm h, Ineq.beta_le₂ (by omega) h⟩
   rb_le β rb h := Ineq.rb_le h
   large n Δ m nb rb hΔ hnm hm h hr hn := Ineq.large hΔ hnm hm h hr hn
-  large_nine n Δ m nb rb hΔ hnm hm h hr hn := Ineq.large_nine hΔ hnm hm h hr hn
-  large_eight n Δ m nb rb hΔ hnm hm h hr hn := Ineq.large_eight hΔ hnm hm h hr hn
+  sb_lt2 n Δ m nb hΔ hm h := Ineq.sb_lt2 hΔ hm h
+  large_half n Δ m nb rb hΔ hnm hm h hr hn := Ineq.large_half hΔ hnm hm h hr hn
   p_rb n Δ nb rb hΔ h hr := Ineq.p_rb hΔ h hr
   tb_le n Δ m nb rb tb hΔ hm h hr ht := Ineq.tb_le hΔ hm h hr ht
 

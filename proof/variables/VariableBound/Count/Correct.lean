@@ -3,11 +3,12 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
 public import VariableBound.Count.Defs
+import VariableBound.Params.Ineq
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
 import Mathlib.Tactic.Positivity
@@ -82,17 +83,18 @@ theorem sq_le (n Δ : ℕ) (h : 2 * LD Δ ≤ n) : (2 * Δ) ^ 2 ≤ 2 ^ n := by
     _ = 2 ^ (LD Δ * 2) := (pow_mul 2 _ 2).symm
     _ ≤ 2 ^ n := Nat.pow_le_pow_right (by norm_num) (by omega)
 
-/-- A check with n̄·|Λ| ≤ 16m has at most `sbMax Δ` clauses: s̄ = 16m/n̄ < 32Δ·log(2Δ). Hypotheses:
-the inequalities of «Setting and parameters», 2 ≤ Δ, m ≤ Δn, n̄ the number of the text. -/
-theorem row_le (hIneq : ParamIneq) (n Δ m nb c : ℕ) (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hNb : IsNb n Δ nb) (h : nb * c ≤ 16 * m) : c ≤ sbMax Δ := by
-  have h1 := (hIneq.sb_lt n Δ m nb hΔ hm hNb).2
-  have h2 := lg_le_LD Δ (by omega)
+/-- A check with n̄·|Λ| ≤ 16m has at most `sbMax Δ` clauses: s̄ = 16m/n̄ < 32Δ·log(2·scaleD Δ).
+Hypotheses: the inequalities of «Setting and parameters», 2 ≤ Δ, m ≤ Δn, n̄ the number of the text
+for `scaleD Δ`. -/
+theorem row_le (hIneq : ParamIneq) (n Δ m nb c : ℕ) (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hNb : IsNb n (scaleD Δ) nb) (h : nb * c ≤ 16 * m) : c ≤ sbMax Δ := by
+  have h1 := (hIneq.sb_lt2 n Δ m nb hΔ hm hNb).1
+  have h2 := lg_le_LD (scaleD Δ) (Ineq.one_le_scaleD (by omega))
   have h0 : (0 : ℝ) < nb := by
     obtain ⟨a, rfl⟩ := hNb.1
     positivity
   have h3 : (nb : ℝ) * c ≤ 16 * m := by exact_mod_cast h
   have h4 : (c : ℝ) ≤ 16 * m / nb := by rw [le_div_iff₀ h0]; linarith
-  have h5 : (32 : ℝ) * Δ * lg (2 * Δ) ≤ 32 * Δ * LD Δ := mul_le_mul_of_nonneg_left h2 (by positivity)
+  have h5 : (32 : ℝ) * Δ * lg (2 * scaleD Δ) ≤ 32 * Δ * LD (scaleD Δ) := mul_le_mul_of_nonneg_left h2 (by positivity)
   have h6 : (c : ℝ) ≤ (sbMax Δ : ℕ) := by unfold sbMax; push_cast; linarith
   exact_mod_cast h6
 
@@ -164,15 +166,22 @@ theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP 
     (hIneq : ParamIneq) (hProd : AppVariables.ProductStmt) (hEmpty : AppVariables.EmptyListStmt) : StCountD := by
   intro Idx _ S ok hC k pad i n Δ ψ hok hK hwf hocc hm hΔ hn hfit
   have hlg := Count.lg_le_LD Δ (by omega)
-  have hsq : (2 * Δ) ^ 2 ≤ 2 ^ n := Count.sq_le n Δ (by omega)
-  have h2Δ : 2 * Δ ≤ 2 ^ n := le_trans (by nlinarith) hsq
-  have hNb : IsNb n Δ (nbD n Δ) := hSpec.1 n Δ (by omega) h2Δ
-  have hnb2 : 2 ≤ nbD n Δ := hSpec.2.1 n Δ (by omega) hsq
-  have hRb : IsRb (beta n ψ.length (nbD n Δ)) (rbD (beta n ψ.length (nbD n Δ))) := hSpec.2.2.1 _
-  have hTbI : IsTb ψ.length (nbD n Δ) (rbD (beta n ψ.length (nbD n Δ))) (tbD ψ.length (nbD n Δ) (rbD (beta n ψ.length (nbD n Δ)))) := hSpec.2.2.2 _ _ _ hnb2
-  have hnR : (29 : ℝ) * LD Δ + 19 ≤ n := by exact_mod_cast hn
+  have hS1 : 1 ≤ scaleD Δ := Ineq.one_le_scaleD (by omega)
+  have hsq : (2 * scaleD Δ) ^ 2 ≤ 2 ^ n := by
+    rw [Ineq.two_scaleD, ← pow_mul]
+    have h1 : 2 * Δ ≤ 2 ^ LD Δ := Nat.le_pow_clog (by norm_num) _
+    calc (2 * Δ) ^ (32 * 2) ≤ (2 ^ LD Δ) ^ (32 * 2) := Nat.pow_le_pow_left h1 _
+      _ = 2 ^ (LD Δ * (32 * 2)) := (pow_mul 2 _ _).symm
+      _ ≤ 2 ^ n := Nat.pow_le_pow_right (by norm_num) (by omega)
+  have h2Δ : 2 * scaleD Δ ≤ 2 ^ n := le_trans (by nlinarith) hsq
+  have hNb : IsNb n (scaleD Δ) (nbD n (scaleD Δ)) := hSpec.1 n (scaleD Δ) hS1 h2Δ
+  have hnb2 : 2 ≤ nbD n (scaleD Δ) := hSpec.2.1 n (scaleD Δ) hS1 hsq
+  have hRb : IsRb (beta n ψ.length (nbD n (scaleD Δ))) (rbD (beta n ψ.length (nbD n (scaleD Δ)))) := hSpec.2.2.1 _
+  have hTbI : IsTb ψ.length (nbD n (scaleD Δ)) (rbD (beta n ψ.length (nbD n (scaleD Δ))))
+      (tbD ψ.length (nbD n (scaleD Δ)) (rbD (beta n ψ.length (nbD n (scaleD Δ))))) := hSpec.2.2.2 _ _ _ hnb2
+  have hnR : (64 : ℝ) * LD Δ + 19 ≤ n := by exact_mod_cast hn
   simp only [countD]
-  generalize nbD n Δ = nb at *
+  generalize nbD n (scaleD Δ) = nb at *
   generalize hβ : beta n ψ.length nb = β at *
   generalize rbD β = rb at *
   generalize tbD ψ.length nb rb = tb at *
@@ -188,24 +197,22 @@ theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP 
       rw [hβ1] at hr; push_cast at hr
       have : (0 : ℝ) ≤ LD Δ := by positivity
       linarith
-    have hr'' : rb + 1 ≤ 7 * n := by
+    have hr'' : 2 * rb + 1 ≤ 7 * n := by
       have h1 : (rb : ℝ) ≤ 2.41 * (n + 1) + 1 := by rw [hβ1] at hr; push_cast at hr; exact hr
       have h2 : (0 : ℝ) ≤ LD Δ := by positivity
-      have : ((rb + 1 : ℕ) : ℝ) ≤ ((7 * n : ℕ) : ℝ) := by push_cast; linarith
+      have : ((2 * rb + 1 : ℕ) : ℝ) ≤ ((7 * n : ℕ) : ℝ) := by push_cast; linarith
       exact_mod_cast this
-    have hF := (hFit k n Δ nb rb tb (Mb β rb) ψ [] hwf hΔ hocc hm hNb (by rw [hM]; omega)
-      (Net.mark_le (by rw [hM]; omega) (fun _ => by rw [hM]; omega) fun _ => by rw [hM]; omega)).2 hc
+    have hF := (hFit k n Δ nb rb tb (Mb β rb) ψ [] hwf hΔ hocc hm hNb (by rw [hM]; omega) (by rw [hM]; omega)).2 hc
     refine Count.evF_eq hEv hNP hProd hC hok hK hfit hF (by rw [hβ, hM, List.length_nil]; omega) (by rw [hM, List.length_nil]; omega) ?_
     exact hEmpty (Fin n → Bool) (Fin ψ.length) (Vof (n := n) ψ) nb (by rw [Fintype.card_fin]; exact hc)
   · rw [decide_eq_false hc, cond_false]
     have hlt : nb < ψ.length := by omega
-    obtain ⟨hrb10, hM14⟩ := hIneq.large n Δ ψ.length nb rb hΔ hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
-    have hM9 := fun h10 => hIneq.large_nine n Δ ψ.length nb rb h10 hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
-    have hM8 := fun h21 => hIneq.large_eight n Δ ψ.length nb rb h21 hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
-    rw [hβ] at hM14 hM9 hM8
-    have htb : tb ≤ tbMax n Δ := hTb n Δ ψ.length tb (by omega) hm (hIneq.tb_le n Δ ψ.length nb rb tb hΔ (by omega) hNb hrb10 hTbI)
+    obtain ⟨hrb10, hM14, hM9⟩ := hIneq.large_half n Δ ψ.length nb rb hΔ hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
+    rw [hβ] at hM14 hM9
+    have htb : tb ≤ tbMax n Δ := hTb n Δ ψ.length tb (by omega) hm
+      (hIneq.tb_le n (scaleD Δ) ψ.length nb rb tb (Ineq.two_le_scaleD (by omega)) (by omega) hNb hrb10 hTbI)
     have hfitL : ∀ L, StructD ψ.length nb rb tb L → Fit k n Δ nb (Mb β rb) (ψ, L) := fun L hL =>
-      (hFit k n Δ nb rb tb (Mb β rb) ψ L hwf hΔ hocc hm hNb hM14 (Net.mark_le hM14 hM9 hM8)).1 hlt hL hrb10 (by rw [hM]; omega) (by rw [hM]; omega) htb
+      (hFit k n Δ nb rb tb (Mb β rb) ψ L hwf hΔ hocc hm hNb hM14 hM9).1 hlt hL hrb10 (by rw [hM]; omega) (by rw [hM]; omega) htb
     have hl1 : ∀ L, StructD ψ.length nb rb tb L → beta n ψ.length nb - 1 + L.length ≤ Mb β rb := fun L hL => by
       have := hL.1; rw [hβ, hM]; omega
     have hl2 : ∀ L, StructD ψ.length nb rb tb L → n + L.length ≤ Mb β rb := fun L hL => by

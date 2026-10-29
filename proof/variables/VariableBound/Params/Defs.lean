@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -32,6 +32,10 @@ noncomputable def lg (x : ℝ) : ℝ := Real.logb 2 x
 
 /-- n̄: the largest power of two 2^a ≤ n with (2Δ)^(2^a) ≤ 2^n; 1 if there is none. -/
 def nbD (n Δ : ℕ) : ℕ := 2 ^ (((List.range (Nat.log 2 n + 1)).filter fun a => decide ((2 * Δ) ^ 2 ^ a ≤ 2 ^ n)).length - 1)
+
+/-- The number for which the program computes n̄: 2·scaleD Δ = (2Δ)^32, so that n̄ is about
+n/(32·log(2Δ)) in place of n/log(2Δ). -/
+def scaleD (Δ : ℕ) : ℕ := 2 ^ 31 * Δ ^ 32
 
 /-- r̄: the least j with 3^j·2^β < 4^j, searched below 3β + 2. -/
 def rbD (β : ℕ) : ℕ := ((List.range (3 * β + 2)).filter fun j => decide (¬ 3 ^ j * 2 ^ β < 4 ^ j)).length
@@ -62,12 +66,14 @@ structure ParamIneq : Prop where
   the text's n ≥ n₀): r̄ ≤ 10n and M ≤ 14n -/
   large : ∀ n Δ m nb rb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
     rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n
-  /-- the same with Δ ≥ 2^10: M ≤ 9n -/
-  large_nine : ∀ n Δ m nb rb : ℕ, 2 ^ 10 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
-    Mb (beta n m nb) rb ≤ 9 * n
-  /-- the same with Δ ≥ 2^21: M ≤ 8n -/
-  large_eight : ∀ n Δ m nb rb : ℕ, 2 ^ 21 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
-    Mb (beta n m nb) rb ≤ 8 * n
+  /-- for 2 ≤ Δ, m ≤ Δ·n and n̄ chosen for `scaleD Δ`: 16m/n̄ < 32Δ·log(2·scaleD Δ) and
+  3m/(n̄+1) < 6Δ·log(2·scaleD Δ) -/
+  sb_lt2 : ∀ n Δ m nb : ℕ, 2 ≤ Δ → m ≤ Δ * n → IsNb n (scaleD Δ) nb →
+    16 * (m : ℝ) / nb < 32 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ)
+  /-- for 2 ≤ Δ, n̄ < m ≤ Δ·n, n̄ chosen for `scaleD Δ`, the r̄ of the text and n ≥ 64·log(2Δ) + 19:
+  r̄ ≤ 10n, M ≤ 14n and 2M ≤ 9n -/
+  large_half : ∀ n Δ m nb rb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n (scaleD Δ) nb → IsRb (beta n m nb) rb → 64 * lg (2 * Δ) + 19 ≤ n →
+    rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 9 * n
   /-- for 2 ≤ Δ and any number r̄ ≤ 10n (as display (61) gives): p·r̄ < 22·log(2Δ) -/
   p_rb : ∀ n Δ nb rb : ℕ, 2 ≤ Δ → IsNb n Δ nb → rb ≤ 10 * n → ((pp nb : ℚ) : ℝ) * rb < 22 * lg (2 * Δ)
   /-- for 2 ≤ Δ, m ≥ 1, any number r̄ ≤ 10n (as display (61) gives) and the t̄ of the text for this

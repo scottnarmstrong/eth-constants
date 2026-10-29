@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -243,7 +245,7 @@ most 4kC₀·log log n for large n». For every C₀ ≥ 1 there is an n₁ such
 with 3 ≤ k ≤ (log n)^(1/4), all real e with (log n)^(−C₀) ≤ e ≤ 1 and all r with e ≤ r ≤ 2e: every Δ
 with 2 ≤ Δ ≤ `occBound k r` has
 log Δ ≤ 3k·log(8k/e) + 2 and Δ ≤ (log n)^(4kC₀) (so it is within «Setting and parameters»), Δ ≤ n +
-1, and n ≥ 29·⌈log₂(2Δ)⌉ + 19 (what `VariableBound.StCountD` asks). That the Δ of an output is at
+1, and n ≥ 64·⌈log₂(2Δ)⌉ + 19 (what `VariableBound.StCountD` asks). That the Δ of an output is at
 most `occBound k r` is `OwnDeltaIsBounded`. The middle step of the text, 3k·log(8k/e) + 2 ≤ 3k(3 +
 (C₀ + 1/4)·log log n) + 2 ≤ 4kC₀·log log n, is the third conjunct. -/
 def OutputsAreWithinTheSetting : Prop :=
@@ -251,7 +253,7 @@ def OutputsAreWithinTheSetting : Prop :=
     2 ≤ Δ → Δ ≤ occBound k r →
       MainTheoremForms.lg Δ ≤ 3 * k * MainTheoremForms.lg (8 * k / e) + 2 ∧ (Δ : ℝ) ≤ MainTheoremForms.lg n ^ (4 * k * C₀) ∧
       (3 * k * MainTheoremForms.lg (8 * k / e) + 2 ≤ 3 * k * (3 + (C₀ + 1 / 4) * MainTheoremForms.lg (MainTheoremForms.lg n)) + 2 ∧ 3 * (k : ℝ) * (3 + (C₀ + 1 / 4) * MainTheoremForms.lg (MainTheoremForms.lg n)) + 2 ≤ 4 * k * C₀ * MainTheoremForms.lg (MainTheoremForms.lg n)) ∧
-      Δ ≤ n + 1 ∧ 29 * LD Δ + 19 ≤ n
+      Δ ≤ n + 1 ∧ 64 * LD Δ + 19 ≤ n
 
 /-- In every output a variable occurs in at most `occBound k r` clauses: for k ≥ 3, 0 < r and a
 k-CNF ψ on n variables, every output Φ has `DeltaOf n Φ ≤ occBound k r`. -/

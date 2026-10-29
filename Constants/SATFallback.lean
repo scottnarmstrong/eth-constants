@@ -21,8 +21,8 @@ open GeneralPieces UniformInK VariableBound ClauseBound.ParityChecks ClauseBound
 open SparsifyThenCount ClauseBound.Alg.TopArith
 open ClauseBound.TopN.Arith
 
-/-- The padding exponent is strictly below n throughout every interval from level 21 onward. -/
-theorem need_lt (l n : ℕ) (hl : 21 ≤ l) (hn : K 16 l ^ 17 ≤ n)
+/-- The padding exponent is strictly below n throughout every interval from level 20 onward. -/
+theorem need_lt (l n : ℕ) (hl : 20 ≤ l) (hn : K 16 l ^ 17 ≤ n)
     (hn' : n < K 16 (l+1)^17) :
     needD solver 3 (idx pieces 16 l) n (precision l) < n := by
   have hK : 2 ≤ K 16 l := PartAUse.two_le_K partA l
@@ -59,17 +59,17 @@ theorem need_lt (l n : ℕ) (hl : 21 ≤ l) (hn : K 16 l ^ 17 ≤ n)
         nlinarith only [hN, hm]
       exact this
     · have hs : precision l = 4 := by unfold precision; omega
-      have h199 : 199 ≤ n := by
+      have h199 : 486 ≤ n := by
         have hx := linear_le_x l (by omega)
-        have h199K : 199 ≤ K 16 l := by
+        have h199K : 486 ≤ K 16 l := by
           rw [K_eq]
-          exact (show 199 ≤ 2^8 by norm_num).trans
-            (Nat.pow_le_pow_right (by norm_num) (by omega : 8 ≤ x 16 l))
+          exact (show 486 ≤ 2^9 by norm_num).trans
+            (Nat.pow_le_pow_right (by norm_num) (by omega : 9 ≤ x 16 l))
         omega
       have hU := SATNeed.ubD_precision_four_le (K 16 l) n (by omega)
       have hN := SATNeed.needD_le_of_ub (stArgD Net.Main.bounds)
         (stLowerD Net.Main.bounds) stBetaU solver (idx pieces 16 l)
-        (C₀ := 1157) (k := 3) (n := n) (s := precision l) (a := 1860)
+        (C₀ := 1157) (k := 3) (n := n) (s := precision l) (a := 1180)
         (A₁ := 1/(ccD 3 1157:ℝ)) (by simpa only [solver_K, hs] using hU)
         (by norm_num) (by simpa only [solver_K] using hK)
         (by simpa only [solver_K] using hn) (by simpa only [solver_K] using hlt)
@@ -89,7 +89,7 @@ theorem need_lt (l n : ℕ) (hl : 21 ≤ l) (hn : K 16 l ^ 17 ≤ n)
       exact this
   exact_mod_cast hN
 
-theorem plan_lt (l n : ℕ) (hl : 21 ≤ l) (hn : K 16 l^17 ≤ n)
+theorem plan_lt (l n : ℕ) (hl : 20 ≤ l) (hn : K 16 l^17 ≤ n)
     (hn' : n < K 16 (l+1)^17) :
     (planAtD solver 3 n (idx pieces 16 l) (precision l)).getD n < n := by
   have hKn : K 16 l ≤ n := (Nat.le_self_pow (by norm_num) _).trans hn
@@ -129,12 +129,12 @@ theorem cutoff_of_exponent (l R M : ℕ) (h : x 16 l * 17 ≤ 10000*R)
   exact (Nat.pow_le_pow_right (by norm_num) h).trans
     ((binary_to_decimal R).trans (Nat.pow_le_pow_right (by norm_num) h'))
 
-/-- The exact binary threshold is 2^1925182748; this is a decimal upper bound. -/
-theorem cutoff_ge : K 16 21^17 ≤ (10^580000000) := by
-  apply cutoff_of_exponent 21 192519
-  · have h := PartA.x_formula 16 21
+/-- The exact binary threshold is 2^962590082; this is a decimal upper bound. -/
+theorem cutoff_ge : K 16 20^17 ≤ (10^290000000) := by
+  apply cutoff_of_exponent 20 96260
+  · have h := PartA.x_formula 16 20
     norm_num at h
-    have hx : x 16 21 = 113246044 := by exact_mod_cast h
+    have hx : x 16 20 = 56622946 := by exact_mod_cast h
     rw [hx]
     norm_num
   · norm_num
@@ -148,8 +148,8 @@ theorem selected_ge_of (L n : ℕ) (hn : K 16 L^17 ≤ n) : L ≤ selected n := 
   have hh : K 16 L < K 16 (selected n+1) := hL.trans_lt hm
   exact Nat.le_of_lt_succ ((K_strictMono 16 le_rfl).lt_iff_lt.mp hh)
 
-theorem selected_ge (n : ℕ) (hn : (10^580000000) ≤ n) : 21 ≤ selected n :=
-  selected_ge_of 21 n (cutoff_ge.trans hn)
+theorem selected_ge (n : ℕ) (hn : (10^290000000) ≤ n) : 20 ≤ selected n :=
+  selected_ge_of 20 n (cutoff_ge.trans hn)
 
 theorem first_level_le (L n : ℕ) (hn : K 16 L^17 ≤ n) : K 16 0^17 ≤ n :=
   (Nat.pow_le_pow_left ((K_strictMono 16 le_rfl).monotone (Nat.zero_le L)) 17).trans hn
@@ -182,10 +182,10 @@ theorem selected_at_target : selected (10^100000) = 8 := by
   have hsel := (K_strictMono 16 le_rfl).lt_iff_lt.mp hlt
   omega
 
-theorem chosen_plan_lt (n : ℕ) (hn : (10^580000000) ≤ n) :
+theorem chosen_plan_lt (n : ℕ) (hn : (10^290000000) ≤ n) :
     (planAtD solver 3 n (pick (root17 n)).2
       (precisionProgram (pick (root17 n)).1).length).getD n < n := by
-  have h0 := first_level_le 21 n (cutoff_ge.trans hn)
+  have h0 := first_level_le 20 n (cutoff_ge.trans hn)
   obtain ⟨h1, h2⟩ := picked_interval n h0
   change (planAtD solver 3 n (Pick.pick pieces 16 (root17 n)).2
     (precisionProgram (pick (root17 n)).1).length).getD n < n
@@ -199,21 +199,21 @@ def algorithm : List Bool × U → List Bool :=
 def budget : List Bool → ℕ := eBD solver pick precisionProgram
 
 theorem encoded_eD_lt {n : ℕ} (φ : Sat3.CNF n) (hφ : SatK.IsKCNF 3 φ)
-    (hn : 10^580000000 ≤ n) : eD solver pick precisionProgram (SatM.enc 3 φ) < n := by
+    (hn : 10^290000000 ≤ n) : eD solver pick precisionProgram (SatM.enc 3 φ) < n := by
   obtain ⟨hk, hf⟩ := Decode.stDecM 3 n φ (by norm_num) hφ.1
   simpa only [eD, planD, kU, nU, idxU, precU, hk, hf, List.length_replicate] using
     chosen_plan_lt n hn
 
 /-- This is a bound on the complete algorithm's budget, for every 3-CNF, without a density hypothesis. -/
 theorem budget_lt {n : ℕ} (φ : Sat3.CNF n) (hφ : SatK.IsKCNF 3 φ)
-    (hn : 10^580000000 ≤ n) : budget (SatM.enc 3 φ) < n :=
+    (hn : 10^290000000 ≤ n) : budget (SatM.enc 3 φ) < n :=
   (expBDc _ solver 3 pick precisionProgram n φ (by norm_num) hφ).1.trans_lt
     (encoded_eD_lt φ hφ hn)
 
 /-- Above the explicit cutoff, neither branch selected by the merged program
 uses its full-assignment exhaustive-counting fallback. Recursive base cases remain. -/
 theorem no_fallback {n : ℕ} (φ : Sat3.CNF n) (hφ : SatK.IsKCNF 3 φ)
-    (hn : 10^580000000 ≤ n) :
+    (hn : 10^290000000 ≤ n) :
     (planD solver pick precisionProgram (SatM.enc 3 φ)).isNone = false ∧
     (useMD solver pick precisionProgram (SatM.enc 3 φ) = true →
       (planM solver pick (SatM.enc 3 φ)).isNone = false) := by

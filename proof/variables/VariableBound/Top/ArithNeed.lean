@@ -68,7 +68,7 @@ theorem lowerDR (hL : StLowerD) {k K n s C₀ : ℕ} (hβ1 : 1 ≤ betaU k s) (h
 
 theorem sbMax_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : sbMax Δ ≤ sbMax Δ' := by
   unfold sbMax
-  exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 h))
+  exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 (Net.scaleD_mono h)))
 
 theorem objMax_mono (n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : objMax n Δ ≤ objMax n Δ' := by
   unfold objMax
@@ -78,7 +78,7 @@ theorem PbD_mono (K n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : PbD K n Δ ≤ Pb
   have htb : tbMax n Δ ≤ tbMax n Δ' := by
     unfold tbMax
     have := Nat.clog_mono_right 2 (Nat.mul_le_mul_right n h)
-    have := Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 h)
+    have := Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 (Net.scaleD_mono h))
     unfold LD
     omega
   unfold PbD PD
@@ -176,7 +176,7 @@ theorem needD_le (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx 
   have hUle : UbD k (S.K i) n (2 ^ betaD k s) ≤ UbD k (S.K i) n (2 ^ betaU k s) := by
     unfold UbD
     exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left
-      (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 hle)) n)) (Nat.mul_le_mul_left _ (Net.markD_mono hle))) _
+      (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 hle)) n)) (Nat.mul_le_mul_left _ (Net.lgD_mono hle))) _
   have hlamle := lamS_le_lamS (S.K i) (3 * S.K i ^ 8) hUle hPle
   have r3' : (S.K i : ℝ) * (((S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) : ℕ) : ℝ) ≤
       ((19 + 140 * k + GD C₀ : ℕ) : ℝ) * (((WofU (betaU k s) (S.K i) : ℕ) : ℝ) * n) := by

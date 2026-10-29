@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -58,7 +60,7 @@ import Mathlib.Tactic.Linarith
      `RecursionWithPieces.countAB`. Its hypotheses: Φ is a k′-CNF; a variable occurs in at most Δ
      clauses, by the definition of Δ
      (`occ_le_DeltaOf`); so Φ has at most Δ·n clauses; Δ ≤ `occBound` (`ownDeltaIsBounded`), hence Δ
-     ≤ n + 1 and n ≥ 29·⌈log₂(2Δ)⌉ + 19; and the padding string fits, because Δ is one of the
+     ≤ n + 1 and n ≥ 64·⌈log₂(2Δ)⌉ + 19; and the padding string fits, because Δ is one of the
      numbers over which `needOutputs` is the maximum (`fitsD_of`).
    * The sum of these numbers over the outputs is the number of satisfying assignments of φ
      (`SparsificationLemma.StepSparsify.count_eq_sum`).
@@ -182,9 +184,9 @@ theorem fitsD_of {Idx : Type} [Enc Idx] (S : Solver Idx) {k n Δ F : ℕ} {r : �
 
 /-- The value at a node whose output Φ is a k-CNF on n variables is the number of satisfying
 assignments of Φ. Hypotheses: i is the index of a level; the Δ of Φ is at most n + 1 and at most
-`occBound k r`, and n ≥ 29·⌈log₂(2Δ)⌉ + 19; the padding string has at least 2^(`needOutputs`) units. -/
+`occBound k r`, and n ≥ 64·⌈log₂(2Δ)⌉ + 19; the padding string has at least 2^(`needOutputs`) units. -/
 theorem countOutput_eq {Idx : Type} [Enc Idx] {S : Solver Idx} {e : ℕ → ℝ} {C₀ : ℕ} (Q : S.Seq e C₀) {k n l : ℕ} {r : ℕ × ℕ} (pad : U) (x : CNode) (hΦ : IsKCNF k n (out x))
-    (hb : SparsificationLemma.StepSparsify.DeltaOf n (out x) ≤ occBound k r) (hn : SparsificationLemma.StepSparsify.DeltaOf n (out x) ≤ n + 1) (hL : 29 * LD (SparsificationLemma.StepSparsify.DeltaOf n (out x)) + 19 ≤ n)
+    (hb : SparsificationLemma.StepSparsify.DeltaOf n (out x) ≤ occBound k r) (hn : SparsificationLemma.StepSparsify.DeltaOf n (out x) ≤ n + 1) (hL : 64 * LD (SparsificationLemma.StepSparsify.DeltaOf n (out x)) + 19 ≤ n)
     (hpad : 2 ^ needOutputs S k r (Q.idx l) n ≤ pad.length) : countOutput S k pad (Q.idx l) n x = cntN n (out x) := by
   unfold countOutput
   cases hx : out x with
@@ -228,9 +230,9 @@ theorem length_le_inLen {k n : ℕ} {φ : CNF n} (hk : 1 ≤ k) (hφ : SatK.IsKC
 variables without repeated clauses, 0 < r, the index of a level, and a padding string of at least
 2^(`needOutputs` + `needWalk`) units, `countAll` on (n, φ) is the number of satisfying assignments
 of φ; provided that every Δ with
-2 ≤ Δ ≤ `occBound k r` has Δ ≤ n + 1 and n ≥ 29·⌈log₂(2Δ)⌉ + 19. -/
+2 ≤ Δ ≤ `occBound k r` has Δ ≤ n + 1 and n ≥ 64·⌈log₂(2Δ)⌉ + 19. -/
 theorem countAll_eq {Idx : Type} [Enc Idx] {S : Solver Idx} {e : ℕ → ℝ} {C₀ : ℕ} (Q : S.Seq e C₀) {k n l : ℕ} {r : ℕ × ℕ} (φ : CNF n) (pad : U) (hk : 3 ≤ k) (hφ : SatK.IsKCNF k φ)
-    (hr1 : 0 < r.1) (hr2 : 0 < r.2) (hΔ : ∀ Δ : ℕ, 2 ≤ Δ → Δ ≤ occBound k r → Δ ≤ n + 1 ∧ 29 * LD Δ + 19 ≤ n)
+    (hr1 : 0 < r.1) (hr2 : 0 < r.2) (hΔ : ∀ Δ : ℕ, 2 ≤ Δ → Δ ≤ occBound k r → Δ ≤ n + 1 ∧ 64 * LD Δ + 19 ≤ n)
     (hpad : 2 ^ (needOutputs S k r (Q.idx l) n + needWalk k r n) ≤ pad.length) :
     countAll S k r (Q.idx l) (List.replicate n (), Decode.toN φ) pad = SatK.numSat φ := by
   unfold countAll
