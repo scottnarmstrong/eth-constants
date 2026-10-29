@@ -13,10 +13,12 @@ the absence of every exponential subroutine inside the recursion.
 | Piece-program constants | `(2, 95)` |
 | Padded piece constant | 190 |
 | Padded recursion overhead coefficient | `6*190+17 = 1157` |
-| Sufficient selected level | 28 |
-| Logarithm to base two of the level-28 clique size | 14,495,514,418 |
-| Exact level threshold in variables | `2^246423745106` |
-| Rounded sufficient threshold in variables | `10^75000000000` |
+| Parity-check marks, for occurrence bound `Δ ≥ 2^15` | `M ≤ 9n`, reduced from `14n` |
+| Recursive exponent constant | `e_l ≤ 0.66 ρ^l` for `l ≥ 1`, reduced from 0.7 |
+| Sufficient selected level | 26 |
+| Logarithm to base two of the level-26 clique size | 3,623,878,462 |
+| Exact level threshold in variables | `2^61605933854` |
+| Rounded sufficient threshold in variables | `10^18600000000` |
 
 The level schedule is unchanged apart from its starting parameter. The new
 precision rule is
@@ -36,30 +38,58 @@ $$
 \le [420(24s+103)+1]e_\ell+2^{-s}\lt 1.
 $$
 
-For levels 28 through 31, `s=4` and `betaU 3 4=198`. Retaining the exact
+For levels 26 through 31, `s=4` and `betaU 3 4=198`. Retaining the exact
 network logarithm gives
 
 $$
-\lceil\log_2(96\cdot 2^{198}\cdot199)\rceil=213,
+\lceil\log_2(96\cdot 2^{198}\cdot199)\rceil=213.
 $$
 
-and, for `n >= 199`,
+Each of the `M` marks of the parity checks costs at most 213 bits at each of
+its `k=3` tests, counted at both ends. The upstream estimate `M ≤ 14n` gave the
+coefficient `84·213`. For `Δ ≥ 2^15` the program's budget now uses `M ≤ 9n`
+(see below), so for `n >= 199`
 
 $$
-U=18(n+199)+84n\cdot213+18K^{16}
-\le17928n+18K^{16}.
+U=18(n+199)+54n\cdot213+18K^{16}
+\le11538n+18K^{16}.
 $$
 
 `SATNeed.ubD_precision_four_le` proves this inequality. The generalized helper
 `SATNeed.needD_le_of_ub` propagates it to the complete budget estimate
 
 $$
-\frac{\mathrm{needD}}n\le17929e_\ell+\frac1{16}<1.
+\frac{\mathrm{needD}}n\le11539e_\ell+\frac1{16}<1.
 $$
 
-At level 28, the proved recurrence estimate gives the rational upper bound
-`135743/163840`, approximately 0.82851. The earlier estimate remains in use
-from level 32 onward, where the precision eventually increases. All three
+`SAT.e_tight` proves `e_l ≤ 0.66 ρ^l` for `l ≥ 1`; the limit of `e_l/ρ^l` is
+about 0.645. At level 26 the expression is therefore at most
+`11539·0.66·2^-13 + 1/16`, approximately 0.99215. The earlier estimate remains
+in use from level 32 onward, where the precision eventually increases.
+
+## The mark bound
+
+The program computes the parameters of Appendix D exactly: `n̄`, then
+`β = n + ⌈log₂ C(m, n̄+1)⌉ + 1`, the number of checks `r̄`, and the number of
+marks `M = r̄ + β − 1`. The upstream estimate of display (61), `M ≤ 14n`,
+bounds `log₂(3m/(n̄+1))` by `3 log₂(2Δ)`. With `L = log₂(2Δ)` and `Δ ≥ 2^15`,
+`VariableBound.Ineq.beta_le_large` uses instead
+
+$$
+\log_2\frac{3m}{\bar n+1}\le\log_2(6\Delta L)=L+\log_2(3L)\le\tfrac32L,
+$$
+
+so that `β ≤ 2.5n + 1.5L + 2`. With `r̄ ≤ 2.41β + 1` this gives `M ≤ 9n` for
+`n ≥ 29L + 19` (`VariableBound.Ineq.large_nine`). The budget function charges
+`2kn·markD(Δ)` bits for the marks, where
+
+$$
+\mathrm{markD}(\Delta)=\max\bigl(9\,\mathrm{lgD}(\Delta),\;14\,\mathrm{lgD}(\min(\Delta,2^{15}))\bigr),
+\qquad \mathrm{lgD}(\Delta)=\lceil\log_2(96\Delta\lceil\log_2 2\Delta\rceil)\rceil.
+$$
+
+The second term keeps the budget increasing in `Δ`, which the upstream
+asymptotic argument uses; for the program's `Δ = 2^198` it is inactive. All three
 plan feasibility conditions are checked. The merged program uses an exponent
 no larger than that of the variable route. If it selects the clause route,
 that route's plan must therefore also exist.
@@ -95,7 +125,7 @@ being below `n` does not show that the resulting Turing machine runs faster
 than brute force: a polynomial simulation raises the padded cost to a power,
 and that degree and its constants are not explicit here.
 
-At level 27 the improved budget expression still exceeds one, even when the
+At level 25 the improved budget expression is about 1.347, even when the
 recurrence is evaluated tightly and the smallest permitted precision is used.
 See [the next targets](NEXT_STEPS.md) for a quantitative assessment, including
 the proposed threshold of `10^100000` variables. These are limitations of the

@@ -33,7 +33,15 @@
     "proof/variables/FixedWidthSteps/RouteDefs.lean",
     "proof/variables/PairsToBound/Defs.lean",
     "proof/variables/PairsToBound/Pairs.lean",
-    "proof/variables/RecursionWithPieces/Master.lean"
+    "proof/variables/RecursionToBound/Numbers.lean",
+    "proof/variables/RecursionWithPieces/Master.lean",
+    "proof/variables/VariableBound/Count/Correct.lean",
+    "proof/variables/VariableBound/Net/CertEv.lean",
+    "proof/variables/VariableBound/Net/Defs.lean",
+    "proof/variables/VariableBound/Net/Fit.lean",
+    "proof/variables/VariableBound/Net/Main.lean",
+    "proof/variables/VariableBound/Params/Defs.lean",
+    "proof/variables/VariableBound/Params/Ineq.lean"
   ],
   "unchanged_files": {
     "MainResults.lean": "47f78a9550d95b37d8718dd1ee16ae824da893a5e17c319f737e6d0a5ed24944",

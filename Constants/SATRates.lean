@@ -77,4 +77,80 @@ theorem e_sharp (l : ℕ) : e rho 16 l ≤ (7/10:ℝ)*rho^l := by
   have h : y rho 16 l ≤ (7/10:ℝ) := (y_sharp l).trans (sub_le_self _ (by positivity))
   exact (div_le_iff₀ hp).1 h
 
+/-- One step of the recurrence for y = e/ρ^l, with the bounds used in `y_sharp`. -/
+theorem y_succ_le (l : ℕ) :
+    y rho 16 (l+1) ≤ y rho 16 l + (15/112:ℝ)/(2:ℝ)^l * y rho 16 l + (1/1000:ℝ)/(2:ℝ)^l := by
+  have hr0 : 0 < rho := by linarith [rho_ge]
+  have hK : (0:ℝ) < K 16 l := by rw [K_cast]; positivity
+  have hp : (0:ℝ) < (2:ℝ)^l := by positivity
+  have hR : (0:ℝ) < rho^(l+1) := by positivity
+  have hy0 : 0 ≤ y rho 16 l := div_nonneg
+    (PartAUse.e_nonneg partA hr0.le l) (by positivity)
+  have hz : zeta l = 1 / (32*(2:ℝ)^l) := by
+    unfold zeta
+    rw [pow_add]
+    norm_num
+    ring
+  have hf : 3*zeta l/rho ≤ (15/112:ℝ)/(2:ℝ)^l := by
+    rw [hz]
+    apply (div_le_iff₀ hr0).2
+    convert div_le_div_of_nonneg_right
+      (show (3/32:ℝ) ≤ (15/112)*rho by nlinarith [rho_ge_seven_tenths]) hp.le using 1 <;> ring
+  have hkN : 8192*(2^l)^2 ≤ K 16 l := by
+    calc 8192*(2^l)^2 = 2^(13+2*l) := by
+          rw [pow_add, ← pow_mul]
+          norm_num only [Nat.reducePow]
+          congr 2
+          omega
+      _ ≤ 2^(16*(l+1)) := Nat.pow_le_pow_right (by norm_num) (by omega)
+      _ ≤ K 16 l := K_ge_pow 16 l le_rfl
+  have hkR : (8192:ℝ)*((2:ℝ)^l)^2 ≤ (K 16 l:ℝ) := by exact_mod_cast hkN
+  have herr : 6*(2:ℝ)^l/(K 16 l:ℝ) ≤ (1/1000:ℝ)/(2:ℝ)^l := by
+    rw [div_le_div_iff₀ hK hp]
+    nlinarith only [hkR, sq_nonneg ((2:ℝ)^l)]
+  have hlo : (1/2:ℝ)^(l+1) ≤ rho^(l+1) := pow_le_pow_left₀ (by norm_num) rho_ge _
+  have hpR : (1:ℝ) ≤ 2^(l+1)*rho^(l+1) := by
+    calc (1:ℝ) = 2^(l+1)*(1/2:ℝ)^(l+1) := by rw [← mul_pow]; norm_num
+      _ ≤ 2^(l+1)*rho^(l+1) := mul_le_mul_of_nonneg_left hlo (by positivity)
+  have herr' : 3/(K 16 l:ℝ)/rho^(l+1) ≤ 6*(2:ℝ)^l/(K 16 l:ℝ) := by
+    rw [div_div, div_le_div_iff₀ (mul_pos hK hR) hK]
+    have hprod := mul_le_mul_of_nonneg_left hpR (show (0:ℝ) ≤ 3*(K 16 l:ℝ) by positivity)
+    rw [pow_succ] at hprod
+    nlinarith only [hprod]
+  have hrec : y rho 16 (l+1) = (1+3*zeta l/rho)*y rho 16 l + 3/(K 16 l:ℝ)/rho^(l+1) := by
+    simp only [y, e, pow_succ]
+    field_simp
+  have hmul := mul_le_mul_of_nonneg_right hf hy0
+  rw [hrec]
+  nlinarith only [hmul, herr'.trans herr]
+
+/-- From level one on, y ≤ 0.66 − 0.18/2^l; the limit of y is about 0.645. -/
+theorem y_tight (l : ℕ) (hl : 1 ≤ l) : y rho 16 l ≤ 33/50 - (9/50:ℝ)/(2:ℝ)^l := by
+  have hr0 : 0 < rho := by linarith [rho_ge]
+  induction l, hl using Nat.le_induction with
+  | base =>
+    have h := y_succ_le 0
+    have h0 : y rho 16 0 = 1/2 := by norm_num [y, e]
+    rw [h0] at h
+    norm_num at h ⊢
+    linarith only [h]
+  | succ l hl ih =>
+    have h := y_succ_le l
+    have hp : (0:ℝ) < (2:ℝ)^l := by positivity
+    have hy0 : 0 ≤ y rho 16 l := div_nonneg
+      (PartAUse.e_nonneg partA hr0.le l) (by positivity)
+    have hy1 : y rho 16 l ≤ 33/50 := by linarith [div_nonneg (by norm_num : (0:ℝ) ≤ 9/50) hp.le]
+    have hmul := mul_le_mul_of_nonneg_left hy1 (show (0:ℝ) ≤ (15/112:ℝ)/2^l by positivity)
+    have hnext : (9/50:ℝ)/2^(l+1) = (9/100:ℝ)/2^l := by rw [pow_succ]; ring
+    rw [hnext]
+    have hid : (9/50:ℝ)/2^l - (15/112:ℝ)/2^l*(33/50) - (1/1000:ℝ)/2^l ≥ (9/100:ℝ)/2^l := by
+      rw [ge_iff_le, div_mul_eq_mul_div, ← sub_div, ← sub_div]
+      exact div_le_div_of_nonneg_right (by norm_num) hp.le
+    linarith only [h, ih, hmul, hid]
+
+theorem e_tight (l : ℕ) (hl : 1 ≤ l) : e rho 16 l ≤ (33/50:ℝ)*rho^l := by
+  have hp : (0:ℝ) < rho^l := pow_pos (by linarith [rho_ge]) _
+  have h : y rho 16 l ≤ (33/50:ℝ) := (y_tight l hl).trans (sub_le_self _ (by positivity))
+  exact (div_le_iff₀ hp).1 h
+
 end ETHConstants.SAT

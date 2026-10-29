@@ -10,6 +10,7 @@ import SATNeed
 import SATNumerics
 import SATFallback
 import SharperPartitions
+import VariableBound.Params.Ineq
 
 #print axioms ETHConstants.grid_multiplier_le
 #print axioms ETHConstants.next_level_le_fourth_power
@@ -53,5 +54,8 @@ import SharperPartitions
 #print axioms ETHConstants.SATNeed.needD_le_of_ub
 #print axioms ETHConstants.SATNeed.ubD_precision_four_le
 #print axioms ETHConstants.SAT.main_small_four
+#print axioms ETHConstants.SAT.y_tight
+#print axioms ETHConstants.SAT.e_tight
+#print axioms VariableBound.Ineq.large_nine
 #print axioms ETHConstants.SAT.level_eight_coefficient_lt
 #print axioms ETHConstants.SAT.selected_at_target

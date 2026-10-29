@@ -46,6 +46,25 @@ The function choosing the initial parameter now uses
 - [`proof/variables/PairsToBound/Pairs.lean`](../proof/variables/PairsToBound/Pairs.lean)
 - [`proof/variables/RecursionWithPieces/Master.lean`](../proof/variables/RecursionWithPieces/Master.lean)
 
+## Mark bound: 8 existing proof files
+
+The budget function `UbD` of the variable route charges the marks of the
+parity checks through `markD`, which uses at most `9n` marks when the
+occurrence bound is at least `2^15` and the upstream `14n` otherwise. The new
+estimate is `VariableBound.Ineq.large_nine`. The program's counting steps are
+unchanged; its budget and the plan guard that uses it change, and the upstream
+theorems are re-proved for the revised budget. Modified files carry a
+modification notice.
+
+- [`proof/variables/RecursionToBound/Numbers.lean`](../proof/variables/RecursionToBound/Numbers.lean)
+- [`proof/variables/VariableBound/Count/Correct.lean`](../proof/variables/VariableBound/Count/Correct.lean)
+- [`proof/variables/VariableBound/Net/CertEv.lean`](../proof/variables/VariableBound/Net/CertEv.lean)
+- [`proof/variables/VariableBound/Net/Defs.lean`](../proof/variables/VariableBound/Net/Defs.lean)
+- [`proof/variables/VariableBound/Net/Fit.lean`](../proof/variables/VariableBound/Net/Fit.lean)
+- [`proof/variables/VariableBound/Net/Main.lean`](../proof/variables/VariableBound/Net/Main.lean)
+- [`proof/variables/VariableBound/Params/Defs.lean`](../proof/variables/VariableBound/Params/Defs.lean)
+- [`proof/variables/VariableBound/Params/Ineq.lean`](../proof/variables/VariableBound/Params/Ineq.lean)
+
 ## Additions
 
 The twelve modules in `Constants/` contain the strengthened estimates, explicit

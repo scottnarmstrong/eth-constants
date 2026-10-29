@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
 -/
 module
 
@@ -21,12 +23,12 @@ for the number B of bits of the values, for all networks of all lists of checks 
 These bounds
 (`UbD`, `PbD`, `BbD`) are the right side of the bound on U displayed in Step 3 of Appendix D, and P =
 ⌈2P₀⌉ and B = (k + 1)M + 1 of that Step, with the logarithms rounded up and with r̄ ≤ 10n, M ≤ 14n,
-s̄ < 32Δ·log(2Δ) and t̄ ≤ log m + 33·log(2Δ) + 1 put in. Proved here:
+M·⌈log(96Δ·log(2Δ))⌉ ≤ `markD Δ`·n, s̄ < 32Δ·log(2Δ) and t̄ ≤ log m + 33·log(2Δ) + 1 put in. Proved here:
 `stTbMax` (the bound for t̄), `stFit` (a list with the three bounds displayed at the end of Step 2,
 on r, on |Λ_j| and on load(E), is fit for an evaluation), `stNPrMax` (the number of profiles),
 `stBounds` (the bounds in closed form) and `stSize` (every network of an
 admissible profile is within the bounds, the case m ≤ n̄ included). Arithmetic and gluing only: the
-bound on U as printed (`StUPrinted`), «The parameters» (`StSized`), the case m ≤ n̄ (`StSmall`), the
+bound on U before display (61) (`StU`), «The parameters» (`StSized`), the case m ≤ n̄ (`StSmall`), the
 bound on gP displayed in «The parameters» (`StP`),
 the count of profiles (`StNPr`) and s̄ < 32Δ·log(2Δ) (`ParamIneq`) come in as hypotheses;
 proof/variables/VariableBound/Net/Main.lean discharges them. -/
@@ -123,7 +125,7 @@ theorem stTbMax : StTbMax := by
 list with the three bounds displayed at the end of Step 2, for
 r̄ ≤ 10n, r̄ ≤ M, 1 ≤ M and t̄ ≤ `tbMax` is fit for an evaluation; if m ≤ n̄, the empty list is. -/
 theorem stFit : StFit := by
-  intro k n Δ nb rb tb M ψ L hW hΔ hocc hm hnb hM
+  intro k n Δ nb rb tb M ψ L hW hΔ hocc hm hnb hM hMk
   refine ⟨fun hlt hS hrb hrM h1 htb => ?_, fun hle => ?_⟩
   · obtain ⟨hl, hrow, hcol⟩ := hS
     exact
@@ -133,6 +135,7 @@ theorem stFit : StFit := by
         m_le := hm
         isNb := hnb
         M_le := hM
+        mark_le := hMk
         r_le := hl.trans hrb
         col := fun e he => (hcol e he).trans (by omega)
         big := fun _ => ⟨hl.trans hrM, h1, fun l hl' => (hrow l hl').2.2⟩
@@ -144,6 +147,7 @@ theorem stFit : StFit := by
         m_le := hm
         isNb := hnb
         M_le := hM
+        mark_le := hMk
         r_le := Nat.zero_le _
         col := fun e _ => Nat.zero_le _
         big := fun h => absurd hle (Nat.not_le.2 h)
@@ -175,15 +179,21 @@ theorem stBounds (h : StP) : StBounds := by
   · unfold UbD
     have hc := clog_le hΔ
     have hL := two_le_LD hΔ
-    generalize Nat.clog 2 (96 * Δ * LD Δ) = c at hc ⊢
+    have hm := markD_le Δ
+    unfold lgD at hm
+    generalize markD Δ = μ at hm ⊢
+    generalize Nat.clog 2 (96 * Δ * LD Δ) = c at hc hm ⊢
     generalize LD Δ = L at hc hL ⊢
     refine Nat.add_le_add_right ?_ _
+    have h0 : n * μ ≤ 14 * (n * c) := by
+      calc n * μ ≤ n * (14 * c) := Nat.mul_le_mul_left _ hm
+        _ = 14 * (n * c) := by ring
     have h1 : n * c ≤ n * (2 * L + 5) := Nat.mul_le_mul_left _ hc
     have e1 : n * (2 * L + 5) = 2 * (n * L) + 5 * n := by ring
     have h2 : n * 2 ≤ n * L := Nat.mul_le_mul_left _ hL
     have h3 : L ≤ n * L := Nat.le_mul_of_pos_left _ hn
-    have h4 : 6 * (n + L) + 28 * (n * c) ≤ 140 * (n * L) := by omega
-    calc 6 * k * (n + L) + 28 * k * n * c = k * (6 * (n + L) + 28 * (n * c)) := by ring
+    have h4 : 6 * (n + L) + 2 * (n * μ) ≤ 140 * (n * L) := by omega
+    calc 6 * k * (n + L) + 2 * k * n * μ = k * (6 * (n + L) + 2 * (n * μ)) := by ring
       _ ≤ k * (140 * (n * L)) := Nat.mul_le_mul_left _ h4
       _ = 140 * k * n * L := by ring
   · rcases Nat.eq_zero_or_pos K with rfl | hK
@@ -203,20 +213,29 @@ theorem sized_mono {J σ τ : Type} [Fintype J] [LinearOrder J] {N : Network J �
   abs_f a b z θ := (h.abs_f a b z θ).trans (pow_le_pow_right₀ (by norm_num) hB)
   abs_Ψ a b z z' hab := (h.abs_Ψ a b z z' hab).trans (pow_le_pow_right₀ (by norm_num) hB)
 
-/-- The right side of the bound on U displayed in Step 3 of Appendix D, on g = 3K⁸ nodes, is at most
-`UbD`, for Δ ≥ 2. -/
-theorem ub_real (k K n : ℕ) {Δ : ℕ} (hΔ : 2 ≤ Δ) :
-    6 * (k : ℝ) * (n + lg (2 * Δ)) + 28 * k * n * lg (96 * Δ * lg (2 * Δ)) + 2 * ((3 * K ^ 8 : ℕ) : ℝ) ^ 2 ≤ ((UbD k K n Δ : ℕ) : ℝ) := by
+/-- The right side of the bound on U of Step 3 of Appendix D before display (61), on g = 3K⁸ nodes,
+is at most `UbD`, for Δ ≥ 2 and M·⌈log(96Δ·log(2Δ))⌉ ≤ `markD Δ`·n. -/
+theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : M * lgD Δ ≤ markD Δ * n) :
+    6 * ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) + 2 * k * M * lg (96 * Δ * lg (2 * Δ)) + 2 * ((3 * K ^ 8 : ℕ) : ℝ) ^ 2 ≤
+      ((UbD k K n Δ : ℕ) : ℝ) := by
   have hΔ' : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
   have h1 := lg_two_mul_le Δ
   have h0 : 0 < lg (2 * Δ) := Real.logb_pos (by norm_num) (by linarith)
-  have h2 : lg (96 * Δ * lg (2 * Δ)) ≤ Nat.clog 2 (96 * Δ * LD Δ) := by
+  have h2 : lg (96 * Δ * lg (2 * Δ)) ≤ ((lgD Δ : ℕ) : ℝ) := by
+    unfold lgD
     refine le_trans (lg_mono (by positivity) ?_) (lg_le_clog _)
     push_cast
     gcongr
+  have hk : ((k - 1 : ℕ) : ℝ) ≤ k := by exact_mod_cast Nat.sub_le k 1
+  have hM' : (M : ℝ) * (lgD Δ : ℕ) ≤ (markD Δ : ℕ) * n := by exact_mod_cast hM
+  have h3 : (M : ℝ) * lg (96 * Δ * lg (2 * Δ)) ≤ (markD Δ : ℕ) * n :=
+    (mul_le_mul_of_nonneg_left h2 (Nat.cast_nonneg M)).trans hM'
+  have p1 := mul_le_mul_of_nonneg_left h3 (Nat.cast_nonneg k : (0 : ℝ) ≤ k)
+  have p2 : ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) ≤ k * (n + LD Δ) :=
+    mul_le_mul hk (by linarith) (by positivity) (Nat.cast_nonneg k)
   unfold UbD
   push_cast
-  gcongr
+  nlinarith
 
 /-- On g = 3K⁸ nodes, P = 2⌈n/g⌉(1 + Δ), the size for m ≤ n̄, is at most `PbD`. -/
 theorem small_le_PbD (K n Δ : ℕ) : 2 * (qv (3 * K ^ 8) n * (1 + Δ)) ≤ PbD K n Δ := by
@@ -233,11 +252,11 @@ theorem small_le_PbD (K n Δ : ℕ) : 2 * (qv (3 * K ^ 8) n * (1 + Δ)) ≤ PbD 
 /-- Step 3, «The total» and «The parameters», with bounds that do not depend on the formula: on g =
 3K⁸ nodes, K > 0, for a list that is fit for an evaluation, the network of an admissible profile has
 size `PbD`,
-values of at most `BbD` bits and total at most `UbD`. For m > n̄ by the bound on U of Step 3 as
-printed (`StUPrinted`), by «The parameters» (`StSized`) and by s̄ < 32Δ·log(2Δ) (`ParamIneq`); for m
+values of at most `BbD` bits and total at most `UbD`. For m > n̄ by the bound on U of Step 3 before
+display (61) (`StU`) and the bound on the marks (`markD`), by «The parameters» (`StSized`) and by s̄ < 32Δ·log(2Δ) (`ParamIneq`); for m
 ≤ n̄ by the last sentence
 of Step 3 (`StSmall`). -/
-theorem stSize (hp : VariableBound.ParamIneq) (hU : StUPrinted) (hS : StSized) (hs : StSmall) : StSize := by
+theorem stSize (hp : VariableBound.ParamIneq) (hU : StU) (hS : StSized) (hs : StSmall) : StSize := by
   intro k K n Δ nb M D fl y hK hF hy
   have hg : 0 < 3 * K ^ 8 := by positivity
   rcases Nat.lt_or_ge nb D.1.length with hlt | hle
@@ -261,7 +280,7 @@ theorem stSize (hp : VariableBound.ParamIneq) (hU : StUPrinted) (hS : StSized) (
       refine sized_mono (hS k (3 * K ^ 8) n Δ nb M (tbMax n Δ) (10 * n) (sbMax Δ : ℚ) D fl y hg (Nat.cast_nonneg _) hF.wf hF.occ_le hF.r_le hsb hF.col hy) le_rfl ?_
       unfold BbD BD
       exact Nat.add_le_add_right (Nat.mul_le_mul_left _ hF.M_le) _
-    · have h2 := (hU k (3 * K ^ 8) n Δ nb M D fl y hg ⟨hF.wf, hF.two, hF.occ_le, hF.m_le, hF.isNb, hlt, hr, h1, hrow⟩ hF.M_le hy).trans (ub_real k K n hF.two)
+    · have h2 := (hU k (3 * K ^ 8) n Δ nb M D fl y hg ⟨hF.wf, hF.two, hF.occ_le, hF.m_le, hF.isNb, hlt, hr, h1, hrow⟩ hy).trans (ub_real k K n hF.two hF.mark_le)
       exact_mod_cast h2
   · obtain ⟨ψ, Lam⟩ := D
     obtain rfl : Lam = [] := hF.small hle
