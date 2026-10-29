@@ -17,7 +17,7 @@ and how far can it be reduced without losing a checked proof?
 This fork investigates that question using Anthropic’s publicly available Lean
 development. The goal is to make the constants explicit, improve them, and
 verify the resulting finite cutoff against the actual program’s branch guards.
-The cutoff proved here has exponent $2.9\times10^{8}$, roughly 34 quadrillion
+The cutoff proved here has exponent $1.45\times10^{8}$, roughly 69 quadrillion
 times smaller than the exponent in the quoted number.
 
 These are different algorithms. This result does not establish that the quoted
@@ -30,7 +30,7 @@ constants can be improved in the Anthropic construction.
 For every valid 3-CNF formula on
 
 $$
-n \ge 10^{290,000,000}
+n \ge 10^{145,000,000}
 $$
 
 variables, the modified program **does not select its top-level exhaustive
@@ -57,7 +57,7 @@ The polynomial simulation degree and its constants have not been made explicit.
 | The program and budget computation are polynomial-time in their encoded inputs, including the pad | [`ETHConstants.SAT.algorithm_poly`](Constants/SATFallback.lean) |
 | Recursive exponent bound improves from 0.85 to 0.66 times the geometric rate | [`ETHConstants.SAT.e_tight`](Constants/SATRates.lean) |
 | The networks are given Calabro's occurrence bound, 2^26 instead of 2^198 at width 3 and precision 4 | [`StepSparsify.lcCal_le_betaD`](proof/sparsification/StepSparsify/CalNumbers.lean) |
-| With the inclusion–exclusion cutoff n̄ about n/(32·log₂(2Δ)), the parity checks use at most 4.5n marks, not 14n | [`VariableBound.Ineq.large_half`](proof/variables/VariableBound/Params/Ineq.lean) |
+| With the inclusion–exclusion cutoff n̄ about n/(128·log₂(2Δ)), the parity checks use at most 3.5n marks (4.5n for Δ < 2^11), not 14n | [`VariableBound.Ineq.large_half`](proof/variables/VariableBound/Params/Ineq.lean) |
 | Explicit partition lower bound with power 16 | [`ETHConstants.Partition.explicit_partition_lower_bound`](Constants/SharperPartitions.lean) |
 | Level growth bound improves from the tenth to the fourth power | [`ETHConstants.next_level_le_fourth_power`](Constants/SharperSchedule.lean) |
 
@@ -65,10 +65,10 @@ The program is `ETHConstants.SAT.algorithm`; its exponent function is
 `ETHConstants.SAT.budget`. Both are defined in
 [`Constants/SATFallback.lean`](Constants/SATFallback.lean).
 
-The exact level used is 20, with
+The exact level used is 19, with
 
 $$
-K_{20}^{17}=2^{962,590,082}.
+K_{19}^{17}=2^{481,293,800}.
 $$
 
 The decimal cutoff is a certified upward rounding. All numerical comparisons
@@ -79,9 +79,9 @@ exponent by a factor of 16 relative to the first release. Bounding the
 parity-check marks by $9n$ instead of $14n$ lowered it by a further factor of 4.
 Giving the networks the occurrence bound of the sparsification actually used,
 $2^{26}$ instead of $2^{198}$, lowered it by a further factor of 32. Cutting
-inclusion–exclusion off at about $n/(32\log_2 2\Delta)$ instead of
-$n/\log_2 2\Delta$ marks, so that at most $4.5n$ parity-check marks are needed,
-halves it again.
+inclusion–exclusion off at about $n/(128\log_2 2\Delta)$ instead of
+$n/\log_2 2\Delta$ marks, so that at most $3.5n$ parity-check marks are needed,
+lowers it by a further factor of 4.
 
 ## Build and verify
 

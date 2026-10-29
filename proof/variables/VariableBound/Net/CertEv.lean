@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -57,7 +57,7 @@ theorem PbD_eq (K n Δ : ℕ) :
 
 /-- `scaleD Δ` = 2^31·Δ^32 is polynomial-time if Δ is. -/
 theorem scaleD_polyT {Δ : α → ℕ} (hΔ : PolyT Δ) : PolyT fun x => scaleD (Δ x) :=
-  (PolyT.const (2 ^ 31)).mul (PolyT.pow_const hΔ 32)
+  (PolyT.const (2 ^ 127)).mul (PolyT.pow_const hΔ 128)
 
 /-- The bound for t̄ is given in unary if n and Δ are polynomial-time. -/
 theorem tbMax_unary {n Δ : α → ℕ} (hn : PolyT n) (hΔ : PolyT Δ) : Unary fun x => tbMax (n x) (Δ x) :=
@@ -75,11 +75,16 @@ theorem objMax_unary {n Δ : α → ℕ} (hn : Unary n) (hΔ : Unary Δ) : Unary
 theorem lgD_unary {Δ : α → ℕ} (hΔ : PolyT Δ) : Unary fun x => lgD (Δ x) :=
   clog_unary (((PolyT.const 96).mul hΔ).mul (LD_unary (scaleD_polyT hΔ)).poly)
 
+/-- The bound on the bits of the marks per variable is given in unary if Δ is. -/
+theorem markH_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => markH (Δ x) :=
+  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 7).mul (lgD_unary hΔ.poly))
+    ((Unary.const 9).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 11))).poly))
+
 /-- The bound on the total U in «The total» of Step 3, with the logarithms rounded up, is given in
 unary if k, K, n and Δ are. -/
 theorem UbD_unary {k K n Δ : α → ℕ} (hk : Unary k) (hK : Unary K) (hn : Unary n) (hΔ : Unary Δ) : Unary fun x => UbD (k x) (K x) (n x) (Δ x) :=
   ((((Unary.const 6).mul hk).mul (hn.add (LD_unary hΔ.poly))).add
-    ((((Unary.const 9).mul hk).mul hn).mul (lgD_unary hΔ.poly))).add
+    ((hk.mul hn).mul (markH_unary hΔ))).add
     ((Unary.const 2).mul (unary_pow_const (g_unary hK) 2))
 
 /-- The bound P that does not depend on the formula is given in unary if K, n and Δ are. -/

@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -81,16 +81,16 @@ theorem clog_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : Nat.clog 2 (96 * Δ * LD Δ) ≤ 2
   calc 96 * Δ * (L' + 1) ≤ 128 * 2 ^ L' * 2 ^ L' := Nat.mul_le_mul (Nat.mul_le_mul (by norm_num) h2) h3
     _ = 2 ^ (2 * (L' + 1) + 5) := by ring
 
-/-- ⌈log(2·scaleD Δ)⌉ ≤ 32·⌈log(2Δ)⌉. -/
-theorem LD_scaleD_le (Δ : ℕ) : LD (scaleD Δ) ≤ 32 * LD Δ := by
+/-- ⌈log(2·scaleD Δ)⌉ ≤ 128·⌈log(2Δ)⌉. -/
+theorem LD_scaleD_le (Δ : ℕ) : LD (scaleD Δ) ≤ 128 * LD Δ := by
   refine Nat.clog_le_of_le_pow ?_
-  have h : 2 * scaleD Δ = (2 * Δ) ^ 32 := by unfold scaleD; ring
+  have h : 2 * scaleD Δ = (2 * Δ) ^ 128 := by unfold scaleD; ring
   rw [h]
-  calc (2 * Δ) ^ 32 ≤ (2 ^ LD Δ) ^ 32 := Nat.pow_le_pow_left (two_mul_le Δ) 32
-    _ = 2 ^ (32 * LD Δ) := by rw [← pow_mul, Nat.mul_comm]
+  calc (2 * Δ) ^ 128 ≤ (2 ^ LD Δ) ^ 128 := Nat.pow_le_pow_left (two_mul_le Δ) 128
+    _ = 2 ^ (128 * LD Δ) := by rw [← pow_mul, Nat.mul_comm]
 
-/-- `lgD Δ` ≤ 2·⌈log(2Δ)⌉ + 10 for Δ ≥ 2. -/
-theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 10 := by
+/-- `lgD Δ` ≤ 2·⌈log(2Δ)⌉ + 12 for Δ ≥ 2. -/
+theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 12 := by
   refine Nat.clog_le_of_le_pow ?_
   have h1 := two_mul_le Δ
   have hL := two_le_LD hΔ
@@ -100,10 +100,10 @@ theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 10 := by
   obtain ⟨L', rfl⟩ : ∃ L', L = L' + 1 := ⟨L - 1, by omega⟩
   have h2 : Δ ≤ 2 ^ L' := by rw [pow_succ] at h1; omega
   have h3 : L' + 1 ≤ 2 ^ L' := Nat.lt_two_pow_self
-  calc 96 * Δ * S ≤ 96 * 2 ^ L' * (32 * (L' + 1)) := Nat.mul_le_mul (Nat.mul_le_mul_left _ h2) hS
-    _ ≤ 96 * 2 ^ L' * (32 * 2 ^ L') := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
-    _ ≤ 2 ^ (2 * (L' + 1) + 10) := by
-      have : 2 ^ (2 * (L' + 1) + 10) = 4096 * (2 ^ L' * 2 ^ L') := by ring
+  calc 96 * Δ * S ≤ 96 * 2 ^ L' * (128 * (L' + 1)) := Nat.mul_le_mul (Nat.mul_le_mul_left _ h2) hS
+    _ ≤ 96 * 2 ^ L' * (128 * 2 ^ L') := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
+    _ ≤ 2 ^ (2 * (L' + 1) + 12) := by
+      have : 2 ^ (2 * (L' + 1) + 12) = 16384 * (2 ^ L' * 2 ^ L') := by ring
       rw [this]
       nlinarith [Nat.zero_le (2 ^ L' * 2 ^ L')]
 
@@ -152,7 +152,7 @@ theorem stTbMax : StTbMax := by
 list with the three bounds displayed at the end of Step 2, for
 r̄ ≤ 10n, r̄ ≤ M, 1 ≤ M and t̄ ≤ `tbMax` is fit for an evaluation; if m ≤ n̄, the empty list is. -/
 theorem stFit : StFit := by
-  intro k n Δ nb rb tb M ψ L hW hΔ hocc hm hnb hM hMk
+  intro k n Δ nb rb tb M ψ L hW hΔ hocc hm hnb hM hMk hMk'
   refine ⟨fun hlt hS hrb hrM h1 htb => ?_, fun hle => ?_⟩
   · obtain ⟨hl, hrow, hcol⟩ := hS
     exact
@@ -163,6 +163,7 @@ theorem stFit : StFit := by
         isNb := hnb
         M_le := hM
         mark_le := hMk
+        mark_le' := hMk'
         r_le := hl.trans hrb
         col := fun e he => (hcol e he).trans (by omega)
         big := fun _ => ⟨hl.trans hrM, h1, fun l hl' => (hrow l hl').2.2⟩
@@ -175,6 +176,7 @@ theorem stFit : StFit := by
         isNb := hnb
         M_le := hM
         mark_le := hMk
+        mark_le' := hMk'
         r_le := Nat.zero_le _
         col := fun e _ => Nat.zero_le _
         big := fun h => absurd hle (Nat.not_le.2 h)
@@ -206,15 +208,20 @@ theorem stBounds (h : StP) : StBounds := by
   · unfold UbD
     have hc := lgD_le hΔ
     have hL := two_le_LD hΔ
-    generalize lgD Δ = c at hc ⊢
+    have hm := markH_le Δ
+    generalize markH Δ = μ at hm ⊢
+    generalize lgD Δ = c at hc hm ⊢
     generalize LD Δ = L at hc hL ⊢
     refine Nat.add_le_add_right ?_ _
-    have h1 : n * c ≤ n * (2 * L + 10) := Nat.mul_le_mul_left _ hc
-    have e1 : n * (2 * L + 10) = 2 * (n * L) + 10 * n := by ring
+    have h0 : n * μ ≤ 9 * (n * c) := by
+      calc n * μ ≤ n * (9 * c) := Nat.mul_le_mul_left _ hm
+        _ = 9 * (n * c) := by ring
+    have h1 : n * c ≤ n * (2 * L + 12) := Nat.mul_le_mul_left _ hc
+    have e1 : n * (2 * L + 12) = 2 * (n * L) + 12 * n := by ring
     have h2 : n * 2 ≤ n * L := Nat.mul_le_mul_left _ hL
     have h3 : L ≤ n * L := Nat.le_mul_of_pos_left _ hn
-    have h4 : 6 * (n + L) + 9 * (n * c) ≤ 140 * (n * L) := by omega
-    calc 6 * k * (n + L) + 9 * k * n * c = k * (6 * (n + L) + 9 * (n * c)) := by ring
+    have h4 : 6 * (n + L) + n * μ ≤ 140 * (n * L) := by omega
+    calc 6 * k * (n + L) + k * n * μ = k * (6 * (n + L) + n * μ) := by ring
       _ ≤ k * (140 * (n * L)) := Nat.mul_le_mul_left _ h4
       _ = 140 * k * n * L := by ring
   · rcases Nat.eq_zero_or_pos K with rfl | hK
@@ -235,8 +242,8 @@ theorem sized_mono {J σ τ : Type} [Fintype J] [LinearOrder J] {N : Network J �
   abs_Ψ a b z z' hab := (h.abs_Ψ a b z z' hab).trans (pow_le_pow_right₀ (by norm_num) hB)
 
 /-- The right side of the bound on U of Step 3 of Appendix D before display (61), on g = 3K⁸ nodes,
-is at most `UbD`, for Δ ≥ 2 and 2M ≤ 9n. -/
-theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 9 * n) :
+is at most `UbD`, for Δ ≥ 2, 2M ≤ 9n and 2M ≤ 7n if Δ ≥ 2^11. -/
+theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 9 * n) (hM7 : 2 ^ 11 ≤ Δ → 2 * M ≤ 7 * n) :
     6 * ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) + 2 * k * M * lg (96 * Δ * lg (2 * scaleD Δ)) + 2 * ((3 * K ^ 8 : ℕ) : ℝ) ^ 2 ≤
       ((UbD k K n Δ : ℕ) : ℝ) := by
   have hΔ' : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
@@ -253,9 +260,9 @@ theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 9 * 
     gcongr
   have h2' : 0 ≤ lg (96 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by nlinarith)
   have hk : ((k - 1 : ℕ) : ℝ) ≤ k := by exact_mod_cast Nat.sub_le k 1
-  have hM' : 2 * (M : ℝ) ≤ 9 * n := by exact_mod_cast hM
-  have h3 : 2 * (M : ℝ) * lg (96 * Δ * lg (2 * scaleD Δ)) ≤ 9 * n * (lgD Δ : ℕ) :=
-    mul_le_mul hM' h2 h2' (by positivity)
+  have hM' : 2 * (M : ℝ) * (lgD Δ : ℕ) ≤ (markH Δ : ℕ) * n := by exact_mod_cast mark_le hM hM7
+  have h3 : 2 * (M : ℝ) * lg (96 * Δ * lg (2 * scaleD Δ)) ≤ (markH Δ : ℕ) * n :=
+    (mul_le_mul_of_nonneg_left h2 (by positivity)).trans hM'
   have p1 := mul_le_mul_of_nonneg_left h3 (Nat.cast_nonneg k : (0 : ℝ) ≤ k)
   have p2 : ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) ≤ k * (n + LD Δ) :=
     mul_le_mul hk (by linarith) (by positivity) (Nat.cast_nonneg k)
@@ -306,7 +313,7 @@ theorem stSize (hp : VariableBound.ParamIneq) (hU : StU) (hS : StSized) (hs : St
       refine sized_mono (hS k (3 * K ^ 8) n Δ nb M (tbMax n Δ) (10 * n) (sbMax Δ : ℚ) D fl y hg (Nat.cast_nonneg _) hF.wf hF.occ_le hF.r_le hsb hF.col hy) le_rfl ?_
       unfold BbD BD
       exact Nat.add_le_add_right (Nat.mul_le_mul_left _ hF.M_le) _
-    · have h2 := (hU k (3 * K ^ 8) n Δ nb M D fl y hg ⟨hF.wf, hF.two, hF.occ_le, hF.m_le, hF.isNb, hlt, hr, h1, hrow⟩ hy).trans (ub_real k K n hF.two hF.mark_le)
+    · have h2 := (hU k (3 * K ^ 8) n Δ nb M D fl y hg ⟨hF.wf, hF.two, hF.occ_le, hF.m_le, hF.isNb, hlt, hr, h1, hrow⟩ hy).trans (ub_real k K n hF.two hF.mark_le hF.mark_le')
       exact_mod_cast h2
   · obtain ⟨ψ, Lam⟩ := D
     obtain rfl : Lam = [] := hF.small hle

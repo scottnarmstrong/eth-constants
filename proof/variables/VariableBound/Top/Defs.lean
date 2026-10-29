@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -21,7 +21,7 @@ merge with the algorithm for the bound in m are those of that file, and its defi
 What differs:
 * a leaf of the counting tree is counted by `countD` (Steps 1 to 4 of Appendix D as printed) in
   place of `countOL`;
-* the plan has three tests in place of five: s ≥ `s0U k`; 2^β ≤ n + 1; n ≥ 64·⌈log₂(2·2^β)⌉ + 19,
+* the plan has three tests in place of five: s ≥ `s0U k`; 2^β ≤ n + 1; n ≥ 256·⌈log₂(2·2^β)⌉ + 19,
   which gives the bounds r̄ ≤ 10n and M ≤ 14n of the Setting of Appendix D. There is no parameter a;
 * the networks are given the occurrence bound Δ = 2^(`betaD k s`) ≤ 2^β, which for k ≤ 3 is that
   of Calabro's thresholds.
@@ -55,12 +55,12 @@ def restD (k K n s : ℕ) : ℕ :=
 def needD (k : ℕ) (i : Idx) (n s : ℕ) : ℕ :=
   needNet S i (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s)) (BbD k n) + restD k (S.K i) n s
 
-/-- If s ≥ s0U k, 2^β ≤ n + 1 and n ≥ 64·⌈log₂(2·2^β)⌉ + 19 (β = betaU k s), and the exponent of the
+/-- If s ≥ s0U k, 2^β ≤ n + 1 and n ≥ 256·⌈log₂(2·2^β)⌉ + 19 (β = betaU k s), and the exponent of the
 networks, computed under the bound n, exists and plus `restD` is at most n: that sum (which is
 `needD` for a polynomial-time solver,
 `Correct.planAtD_some`). Otherwise `none`, and exhaustive counting is used. -/
 def planAtD (k n : ℕ) (i : Idx) (s : ℕ) : Option ℕ :=
-  if s0U k ≤ s ∧ 2 ^ betaU k s ≤ n + 1 ∧ 64 * LD (2 ^ betaU k s) + 19 ≤ n then
+  if s0U k ≤ s ∧ 2 ^ betaU k s ≤ n + 1 ∧ 256 * LD (2 ^ betaU k s) + 19 ≤ n then
     (needNetC S (List.replicate n ()) i (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s)) (BbD k n)).bind fun v =>
       if v + restD k (S.K i) n s ≤ n then some (v + restD k (S.K i) n s) else none
   else none

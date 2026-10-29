@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -55,11 +55,11 @@ end
 /-- Steps 1 to 4: the count is right. Hypotheses: the clique solver S is correct (`S.Correct ok`) at
 the index i (`ok i`) and has K ≥ 2 there; every clause of ψ has 1 to k literals on the variables 0,
 …, n − 1 (`WfL`); every variable occurs in
-at most Δ clauses; m ≤ Δ·n; 2 ≤ Δ; n ≥ 64·⌈log₂(2Δ)⌉ + 19 (with the inequalities of «Setting and
+at most Δ clauses; m ≤ Δ·n; 2 ≤ Δ; n ≥ 256·⌈log₂(2Δ)⌉ + 19 (with the inequalities of «Setting and
 parameters» in Appendix D this gives n ≥ 2·log(2Δ), r̄ ≤ 10n and M ≤ 14n); and the pad fits
 (`FitsD`). -/
 def StCountD : Prop := ∀ (Idx : Type) [Enc Idx] (S : Solver Idx) (ok : Idx → Prop), S.Correct ok → ∀ (k : ℕ) (pad : U) (i : Idx) (n Δ : ℕ) (ψ : Fml),
-  ok i → 2 ≤ S.K i → WfL k n [ψ] → (∀ v, (occ ψ v).length ≤ Δ) → ψ.length ≤ Δ * n → 2 ≤ Δ → 64 * LD Δ + 19 ≤ n → FitsD S k i n Δ pad.length →
+  ok i → 2 ≤ S.K i → WfL k n [ψ] → (∀ v, (occ ψ v).length ≤ Δ) → ψ.length ≤ Δ * n → 2 ≤ Δ → 256 * LD Δ + 19 ≤ n → FitsD S k i n Δ pad.length →
   countD S k pad i n Δ ψ = nSat n ψ
 
 /-- For every polynomial-time clique solver (`S.Poly`), the count of one sparse formula is

@@ -89,12 +89,13 @@ plan's guard are unchanged. (The tiered mark bound of this step was later replac
 
 ## Inclusion–exclusion cutoff: 9 more existing proof files
 
-The variable route computes `n̄` for `scaleD Δ = 2^31·Δ^32` in place of `Δ`, so
-that `n̄` is about `n/(32 log₂ 2Δ)`; then `2M ≤ 9n` for every `Δ`
-(`VariableBound.Ineq.large_half`). The budget charges `9kn·lgD(Δ)` bits for
-the marks, with `lgD` taken for the larger checks. The plan's guard becomes `n ≥ 64·⌈log₂(2Δ)⌉ + 19`, and the
-lower-order estimates of `VariableBound.Top.ArithNat` (and the constant `GD`)
-grow accordingly. Besides files already listed above, these change:
+The variable route computes `n̄` for `scaleD Δ = 2^127·Δ^128` in place of `Δ`,
+so that `n̄` is about `n/(128 log₂ 2Δ)`; then `2M ≤ 9n` for every `Δ`, and
+`2M ≤ 7n` for `Δ ≥ 2^11` (`VariableBound.Ineq.large_half`). The budget charges
+`kn·markH(Δ)` bits for the marks, with `lgD` taken for the larger checks. The
+plan's guard becomes `n ≥ 256·⌈log₂(2Δ)⌉ + 19`, and the lower-order estimates
+of `VariableBound.Top.ArithNat` (and the constant `GD`) grow accordingly.
+Besides files already listed above, these change:
 
 - [`proof/variables/RecursionToBound/Correct.lean`](../proof/variables/RecursionToBound/Correct.lean)
 - [`proof/variables/RecursionToBound/Defs.lean`](../proof/variables/RecursionToBound/Defs.lean)
