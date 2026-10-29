@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -39,13 +41,22 @@ theorem UbD_le (hB : StBounds) (hβ : 1 ≤ β) (hn : 1 ≤ n) : UbD k K n (2 ^ 
   calc UbD k K n (2 ^ β) ≤ 140 * k * n * (β + 1) + 2 * (3 * K ^ 8) ^ 2 := h
     _ = 140 * k * n * (β + 1) + 18 * K ^ 16 := by ring
 
-/-- The bound of Step 3 on g·P, in closed form, for Δ = 2^β: g·P ≤ n·2^β·(842·(β+3) + 4·size n), for
-β ≥ 1, n ≥ 1 and g = 3K⁸ ≤ n, given `Net.StBounds`. -/
+/-- ⌈log₂(2·scaleD 2^β)⌉ = 32β + 32. -/
+theorem LD_scaleD_pow (β : ℕ) : LD (scaleD (2 ^ β)) = 32 * β + 32 := by
+  have h : scaleD (2 ^ β) = 2 ^ (32 * β + 31) := by
+    unfold scaleD
+    rw [← pow_mul, ← pow_add]
+    congr 1
+    ring
+  rw [h, LD_two_pow]
+
+/-- The bound of Step 3 on g·P, in closed form, for Δ = 2^β: g·P ≤ n·2^β·(26756·(β+3) + 4·size n),
+for β ≥ 1, n ≥ 1 and g = 3K⁸ ≤ n, given `Net.StBounds`. -/
 theorem gPD_le (hB : StBounds) (hβ : 1 ≤ β) (hn : 1 ≤ n) (hg : 3 * K ^ 8 ≤ n) :
-    3 * K ^ 8 * PbD K n (2 ^ β) ≤ n * 2 ^ β * (842 * (β + 3) + 4 * n.size) := by
+    3 * K ^ 8 * PbD K n (2 ^ β) ≤ n * 2 ^ β * (26756 * (β + 3) + 4 * n.size) := by
   have h := (hB 0 K n (2 ^ β) hn (two_le_D hβ)).2
   unfold tbMax sbMax at h
-  rw [LD_two_pow] at h
+  rw [LD_scaleD_pow] at h
   refine h.trans ?_
   have hc : Nat.clog 2 (2 ^ β * n) ≤ β + n.size := (clog_le_size _).trans (size_mul_le β n)
   have hD : 1 ≤ 2 ^ β := Nat.one_le_two_pow
@@ -53,14 +64,14 @@ theorem gPD_le (hB : StBounds) (hβ : 1 ≤ β) (hn : 1 ≤ n) (hg : 3 * K ^ 8 �
   generalize 3 * K ^ 8 = g at hg
   generalize n.size = z at hc
   generalize 2 ^ β = D at hD
-  have h1 : 1 + D * (c + 33 * (β + 1) + 1 + 3) ≤ D * (34 * β + z + 38) := by
-    calc 1 + D * (c + 33 * (β + 1) + 1 + 3) ≤ D + D * (34 * β + z + 37) := Nat.add_le_add hD (Nat.mul_le_mul_left _ (by omega))
-      _ = D * (34 * β + z + 38) := by ring
-  calc 2 * (n + g) * (1 + D * (c + 33 * (β + 1) + 1 + 3)) + 2 * (10 * n + g) * (32 * D * (β + 1)) + g
-      ≤ 4 * n * (D * (34 * β + z + 38)) + 22 * n * (32 * D * (β + 1)) + n * D :=
+  have h1 : 1 + D * (c + 33 * (32 * β + 32) + 1 + 3) ≤ D * (1057 * β + z + 1061) := by
+    calc 1 + D * (c + 33 * (32 * β + 32) + 1 + 3) ≤ D + D * (1057 * β + z + 1060) := Nat.add_le_add hD (Nat.mul_le_mul_left _ (by omega))
+      _ = D * (1057 * β + z + 1061) := by ring
+  calc 2 * (n + g) * (1 + D * (c + 33 * (32 * β + 32) + 1 + 3)) + 2 * (10 * n + g) * (32 * D * (32 * β + 32)) + g
+      ≤ 4 * n * (D * (1057 * β + z + 1061)) + 22 * n * (32 * D * (32 * β + 32)) + n * D :=
         Nat.add_le_add (Nat.add_le_add (Nat.mul_le_mul (by omega) h1) (Nat.mul_le_mul_right _ (by omega))) (hg.trans (Nat.le_mul_of_pos_right _ hD))
-    _ = n * D * (840 * β + 4 * z + 857) := by ring
-    _ ≤ n * D * (842 * (β + 3) + 4 * z) := Nat.mul_le_mul_left _ (by omega)
+    _ = n * D * (26756 * β + 4 * z + 26773) := by ring
+    _ ≤ n * D * (26756 * (β + 3) + 4 * z) := Nat.mul_le_mul_left _ (by omega)
 
 /-- Step 4, «g ≤ n»: 3K⁸ ≤ n, for 2 ≤ K and K^17 ≤ n. -/
 theorem g_le_n (hK : 2 ≤ K) (hn17 : K ^ 17 ≤ n) : 3 * K ^ 8 ≤ n := by
@@ -87,12 +98,12 @@ theorem gPD_le_W (hB : StBounds) (hβ : 1 ≤ β) (hK : 2 ≤ K) (hn17 : K ^ 17 
   have hbb : b ≤ b ^ 2 := Nat.le_self_pow (by norm_num) b
   have a1 : b ≤ b ^ 2 * Y := hbb.trans (Nat.le_mul_of_pos_right _ hY)
   have a2 : Y ≤ b ^ 2 * Y := Nat.le_mul_of_pos_left _ (Nat.one_le_pow _ _ hb1)
-  have h2 : 842 * b + 4 * z ≤ (842 + 68 * C₀) * (b ^ 2 * Y) := by
-    calc 842 * b + 4 * z ≤ 842 * (b ^ 2 * Y) + 4 * (17 * C₀ * (b ^ 2 * Y)) :=
+  have h2 : 26756 * b + 4 * z ≤ (26756 + 68 * C₀) * (b ^ 2 * Y) := by
+    calc 26756 * b + 4 * z ≤ 26756 * (b ^ 2 * Y) + 4 * (17 * C₀ * (b ^ 2 * Y)) :=
           Nat.add_le_add (Nat.mul_le_mul_left _ a1) (Nat.mul_le_mul_left _ (hz.trans (Nat.mul_le_mul_left _ a2)))
-      _ = (842 + 68 * C₀) * (b ^ 2 * Y) := by ring
-  calc n * D * (842 * b + 4 * z) ≤ n * D * ((842 + 68 * C₀) * (b ^ 2 * Y)) := Nat.mul_le_mul_left _ h2
-    _ = (842 + 68 * C₀) * (b ^ 2 * D * Y * n) := by ring
+      _ = (26756 + 68 * C₀) * (b ^ 2 * Y) := by ring
+  calc n * D * (26756 * b + 4 * z) ≤ n * D * ((26756 + 68 * C₀) * (b ^ 2 * Y)) := Nat.mul_le_mul_left _ h2
+    _ = (26756 + 68 * C₀) * (b ^ 2 * D * Y * n) := by ring
 
 /-- The bound B' = `bitsS` for the bit length of the entries of the rebalanced instance, for g = 3K⁸
 and K ≥ 1: B' = P·6K⁷ + B·(6K⁸ + 36K^15). The paper's B' is ⌈2gP/K⌉ + g²·B = 6K⁷·P + 9K^16·B. -/
@@ -131,63 +142,80 @@ theorem argD_le (hB : StBounds) (hkβ : k ≤ β) (hbD : β + 3 ≤ 2 ^ β) (hK 
   have u1 : 140 * k * n * (β + 1) ≤ 2 ^ (8 + t + t + t) := mul_le_pow (mul_le_pow (mul_le_pow (by norm_num) hkt) hnt) hb1t
   have u2 : 18 * K ^ 16 ≤ 2 ^ (5 + t) := mul_le_pow (by norm_num) hK16
   have hUb : UbD k K n (2 ^ β) ≤ 2 ^ (3 * t + 9) := (UbD_le hB hβ hn0).trans (add_le_pow u1 u2 (by omega) (by omega))
-  have v1 : 842 * (β + 3) ≤ 2 ^ (10 + t) := mul_le_pow (by norm_num) hbt
+  have v1 : 26756 * (β + 3) ≤ 2 ^ (15 + t) := mul_le_pow (by norm_num) hbt
   have v2 : 4 * n.size ≤ 2 ^ (2 + t) := mul_le_pow (by norm_num) hzt
-  have hgP : 3 * K ^ 8 * PbD K n (2 ^ β) ≤ 2 ^ (t + t + (t + 11)) :=
+  have hgP : 3 * K ^ 8 * PbD K n (2 ^ β) ≤ 2 ^ (t + t + (t + 16)) :=
     (gPD_le hB hβ hn0 (g_le_n hK hn17)).trans (mul_le_pow (mul_le_pow hnt hDt) (add_le_pow v1 v2 (by omega) (by omega)))
-  have hlam : lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) ≤ 2 ^ (4 * t + 12) := by
+  have hC : 1 ≤ C₀ := by
+    rcases Nat.eq_zero_or_pos C₀ with h0 | h0
+    · rw [h0, Nat.mul_zero, pow_zero] at hlt; omega
+    · exact h0
+  have ht17 : 17 ≤ t := by
+    rw [ht]
+    have hY : 1 ≤ K.size := Nat.size_pos.2 hK1
+    calc 17 = 17 * 1 * 1 := by norm_num
+      _ ≤ 17 * C₀ * K.size := Nat.mul_le_mul (Nat.mul_le_mul_left _ hC) hY
+  have hlam : lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) ≤ 2 ^ (4 * t + 14) := by
     have h1 := lamS_mul_le K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β))
-    have h2 : lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) ≤
-        lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) * K ^ 3 := Nat.le_mul_of_pos_right _ (by positivity)
+    have h8 : 8 ≤ K ^ 3 := by
+      calc 8 = 2 ^ 3 := by norm_num
+        _ ≤ K ^ 3 := Nat.pow_le_pow_left hK 3
+    have h2 : lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) * 8 ≤
+        lamS K (3 * K ^ 8) (UbD k K n (2 ^ β)) (PbD K n (2 ^ β)) * K ^ 3 := Nat.mul_le_mul_left _ h8
     have h3 : K ^ 3 + K * UbD k K n (2 ^ β) ≤ 2 ^ (4 * t + 10) := add_le_pow hK3 (mul_le_pow hKt hUb) (by omega) (by omega)
-    exact (h2.trans h1).trans (add_le_pow h3 hgP (by omega) (by omega))
-  have hBt : bitsS K (3 * K ^ 8) (PbD K n (2 ^ β)) (BbD k n) ≤ 2 ^ (3 * t + 13) := by
+    have h4 := (h2.trans h1).trans (add_le_pow (r := 4 * t + 17) h3 hgP (by omega) (by omega))
+    have h5 : 2 ^ (4 * t + 17) = 2 ^ (4 * t + 14) * 8 := by rw [show 4 * t + 17 = 4 * t + 14 + 3 by omega, pow_add]; norm_num
+    rw [h5] at h4
+    exact Nat.le_of_mul_le_mul_right h4 (by norm_num)
+  have hBt : bitsS K (3 * K ^ 8) (PbD K n (2 ^ β)) (BbD k n) ≤ 2 ^ (3 * t + 18) := by
     rw [bitsS_eq hK1]
     have h7 : K ^ 7 ≤ K ^ 8 := Nat.pow_le_pow_right hK1 (by norm_num)
     have h8 : K ^ 8 ≤ K ^ 15 := Nat.pow_le_pow_right hK1 (by norm_num)
-    have p1 : PbD K n (2 ^ β) * (6 * K ^ 7) ≤ 2 ^ (t + t + (t + 11) + 1) := by
-      rw [pow_succ]
+    have p1 : PbD K n (2 ^ β) * (6 * K ^ 7) ≤ 2 ^ (t + t + (t + 16) + 1) := by
+      rw [pow_succ 2 (t + t + (t + 16))]
       calc PbD K n (2 ^ β) * (6 * K ^ 7) ≤ PbD K n (2 ^ β) * (6 * K ^ 8) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h7)
         _ = 3 * K ^ 8 * PbD K n (2 ^ β) * 2 := by ring
-        _ ≤ 2 ^ (t + t + (t + 11)) * 2 := Nat.mul_le_mul_right _ hgP
+        _ ≤ 2 ^ (t + t + (t + 16)) * 2 := Nat.mul_le_mul_right _ hgP
     have p2 : BbD k n ≤ 2 ^ (2 * t + 5) := by
       unfold BbD BD
       exact add_le_pow (q := 0) (mul_le_pow hk1t (mul_le_pow (p := 4) (by norm_num) hnt)) (by norm_num) (by omega) (by omega)
     have p3 : 6 * K ^ 8 + 36 * K ^ 15 ≤ 2 ^ (6 + t) :=
       (by omega : 6 * K ^ 8 + 36 * K ^ 15 ≤ 42 * K ^ 15).trans (mul_le_pow (by norm_num) hK15)
     exact add_le_pow p1 (mul_le_pow p2 p3) (by omega) (by omega)
-  have hsum := add_le_pow (r := 4 * t + 14) hlam hBt (by omega) (by omega)
+  have hsum := add_le_pow (r := 4 * t + 15) hlam hBt (by omega) (by omega)
   exact (mul_le_pow hKt hsum).trans (Nat.pow_le_pow_right (by norm_num) (by omega))
 
-/-- The bit length of the bound for the number of objects, for Δ = 2^β: at most 2β + size n + 10. -/
-theorem size_objMax_le (β n : ℕ) : Nat.size (objMax n (2 ^ β)) ≤ 2 * β + n.size + 10 := by
+/-- The bit length of the bound for the number of objects, for Δ = 2^β: at most 2β + size n + 15. -/
+theorem size_objMax_le (β n : ℕ) : Nat.size (objMax n (2 ^ β)) ≤ 2 * β + n.size + 15 := by
   rw [Nat.size_le]
   unfold objMax sbMax
-  rw [LD_two_pow]
+  rw [LD_scaleD_pow]
   have h1 : β + 1 ≤ 2 ^ β := Nat.lt_two_pow_self
   have h2 : n ≤ 2 ^ n.size := (Nat.lt_size_self n).le
-  have h3 : 320 * (β + 1) + 1 ≤ 2 ^ (9 + β) := by rw [pow_add]; omega
-  calc 10 * n * (32 * 2 ^ β * (β + 1)) + 2 ^ β * n = n * 2 ^ β * (320 * (β + 1) + 1) := by ring
-    _ ≤ 2 ^ (n.size + β + (9 + β)) := mul_le_pow (mul_le_pow h2 le_rfl) h3
-    _ < 2 ^ (2 * β + n.size + 10) := Nat.pow_lt_pow_right (by norm_num) (by omega)
+  have h3 : 10240 * (β + 1) + 1 ≤ 2 ^ (14 + β) := by rw [pow_add]; omega
+  calc 10 * n * (32 * 2 ^ β * (32 * β + 32)) + 2 ^ β * n = n * 2 ^ β * (10240 * (β + 1) + 1) := by ring
+    _ ≤ 2 ^ (n.size + β + (14 + β)) := mul_le_pow (mul_le_pow h2 le_rfl) h3
+    _ < 2 ^ (2 * β + n.size + 15) := Nat.pow_lt_pow_right (by norm_num) (by omega)
 
-/-- The bit length of the bound for the list of checks, for Δ = 2^β: at most 3β + 2·size n + 17. -/
-theorem size_lists_le (β n : ℕ) : Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ β) + 1) * (Nat.size (2 ^ β * n) + 2) + 8) ≤ 3 * β + 2 * n.size + 17 := by
+/-- The bit length of the bound for the list of checks, for Δ = 2^β: at most 3β + 2·size n + 22. -/
+theorem size_lists_le (β n : ℕ) : Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ β) + 1) * (Nat.size (2 ^ β * n) + 2) + 8) ≤ 3 * β + 2 * n.size + 22 := by
   rw [Nat.size_le]
   unfold sbMax
-  rw [LD_two_pow]
+  rw [LD_scaleD_pow]
   have h1 : β + 1 ≤ 2 ^ β := Nat.lt_two_pow_self
   have h2 : n + 1 ≤ 2 ^ n.size := Nat.lt_size_self n
   have h3 : 10 * n + 1 ≤ 2 ^ (4 + n.size) := by rw [pow_add]; omega
-  have h4 : 32 * 2 ^ β * (β + 1) + 1 ≤ 2 ^ (6 + β + β) := by
-    have a1 : 32 * 2 ^ β * (β + 1) ≤ 2 ^ (5 + β + β) := mul_le_pow (mul_le_pow (by norm_num) le_rfl) h1
+  have h4 : 32 * 2 ^ β * (32 * β + 32) + 1 ≤ 2 ^ (11 + β + β) := by
+    have a1 : 32 * 2 ^ β * (32 * β + 32) ≤ 2 ^ (10 + β + β) := by
+      rw [show 32 * 2 ^ β * (32 * β + 32) = 1024 * 2 ^ β * (β + 1) by ring]
+      exact mul_le_pow (mul_le_pow (by norm_num) le_rfl) h1
     exact add_le_pow (q := 0) a1 (by norm_num) (by omega) (by omega)
   have h5 : Nat.size (2 ^ β * n) + 2 ≤ 2 ^ (β + n.size + 2) := (Nat.add_le_add_right (size_mul_le β n) 2).trans Nat.lt_two_pow_self.le
-  have h6 : 8 * (10 * n + 1) * (32 * 2 ^ β * (β + 1) + 1) * (Nat.size (2 ^ β * n) + 2) ≤ 2 ^ (3 + (4 + n.size) + (6 + β + β) + (β + n.size + 2)) :=
+  have h6 : 8 * (10 * n + 1) * (32 * 2 ^ β * (32 * β + 32) + 1) * (Nat.size (2 ^ β * n) + 2) ≤ 2 ^ (3 + (4 + n.size) + (11 + β + β) + (β + n.size + 2)) :=
     mul_le_pow (mul_le_pow (mul_le_pow (by norm_num) h3) h4) h5
-  calc 8 * (10 * n + 1) * (32 * 2 ^ β * (β + 1) + 1) * (Nat.size (2 ^ β * n) + 2) + 8 ≤ 2 ^ (3 * β + 2 * n.size + 16) :=
+  calc 8 * (10 * n + 1) * (32 * 2 ^ β * (32 * β + 32) + 1) * (Nat.size (2 ^ β * n) + 2) + 8 ≤ 2 ^ (3 * β + 2 * n.size + 21) :=
         add_le_pow (q := 3) h6 (by norm_num) (by omega) (by omega)
-    _ < 2 ^ (3 * β + 2 * n.size + 17) := Nat.pow_lt_pow_right (by norm_num) (by omega)
+    _ < 2 ^ (3 * β + 2 * n.size + 22) := Nat.pow_lt_pow_right (by norm_num) (by omega)
 
 /-- Step 4, «all these are o(en)», first half: the parts of lower order of the exponent, each
 multiplied by K, are at most a number times W·n; the number depends on C₀ only, except 19 + 140·k +
@@ -205,7 +233,7 @@ theorem lowerD (hB : StBounds) (hβ : 1 ≤ β) (hkb : k ≤ β) (hK : 2 ≤ K) 
     K * (Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ β) + 1) * (Nat.size (2 ^ β * n) + 2) + 8) + 2 + (β + 5 * k + 10 + (k + 3) * n.size)) ≤
       (10 + 34 * C₀) * (WofU β K * n) := by
   have hK1 : 1 ≤ K := by omega
-  obtain ⟨-, -, -, w4, w5, w6, -, w8⟩ := WofU_ge (β := β) hK1
+  obtain ⟨-, w2, -, w4, w5, w6, -, w8⟩ := WofU_ge (β := β) hK1
   have hz := size_n_le hlt
   have hY : 1 ≤ K.size := Nat.size_pos.2 hK1
   have hKn : K ≤ n := by simpa using pow_le_n hK1 hn17 (j := 1) (by norm_num)
@@ -215,14 +243,16 @@ theorem lowerD (hB : StBounds) (hβ : 1 ≤ β) (hkb : k ≤ β) (hK : 2 ≤ K) 
   have hso := size_objMax_le β n
   have hsl := size_lists_le β n
   obtain ⟨W, hW⟩ : ∃ W, W = WofU β K := ⟨_, rfl⟩
-  rw [← hW] at w4 w5 w6 w8 gP ⊢
+  rw [← hW] at w2 w4 w5 w6 w8 gP ⊢
   obtain ⟨b, hb⟩ : ∃ b, b = β + 3 := ⟨_, rfl⟩
-  rw [← hb] at w4 w6
+  rw [← hb] at w2 w4 w6
   obtain ⟨Y, hYd⟩ : ∃ Y, Y = K.size := ⟨_, rfl⟩
-  rw [← hYd] at w4 w5 hz hY ⊢
+  rw [← hYd] at w2 w4 w5 hz hY ⊢
   obtain ⟨G, hG⟩ : ∃ G, G = GD C₀ := ⟨_, rfl⟩
   rw [← hG] at gP ⊢
   have hb1 : 1 ≤ b := by omega
+  have hsq : 4 * b ≤ b ^ 2 := by rw [sq]; exact Nat.mul_le_mul_right b (by omega)
+  have hb2Y : b ^ 2 ≤ b ^ 2 * Y := Nat.le_mul_of_pos_right _ hY
   have Wn : n ≤ W * n := Nat.le_mul_of_pos_left _ w8
   have K16 : K * K ^ 16 ≤ n := by rw [← pow_succ']; exact hn17
   have a1 : b ≤ b * Y := Nat.le_mul_of_pos_right _ hY
@@ -276,25 +306,31 @@ theorem lowerD (hB : StBounds) (hβ : 1 ≤ β) (hkb : k ≤ β) (hK : 2 ≤ K) 
       _ ≤ C₀ * ((85 * C₀ + 16) * W * n) := Nat.mul_le_mul_left _ (Nat.mul_le_mul h1 (pow_le_n hK1 hn17 (by norm_num)))
       _ = C₀ * (85 * C₀ + 16) * (W * n) := by ring
   · have h2 : Nat.size (objMax n (2 ^ β)) ≤ (4 + 17 * C₀) * W := by
-      calc Nat.size (objMax n (2 ^ β)) ≤ 2 * β + n.size + 10 := hso
-        _ ≤ 4 * (b * Y) + 17 * C₀ * (b * Y) := by omega
-        _ = (4 + 17 * C₀) * (b * Y) := by ring
-        _ ≤ (4 + 17 * C₀) * W := Nat.mul_le_mul_left _ w4
+      have hb4 : 2 * β + 15 ≤ 4 * (b ^ 2 * Y) := by omega
+      have hz2 : n.size ≤ 17 * C₀ * (b ^ 2 * Y) := hz.trans (Nat.mul_le_mul_left _ (Nat.le_mul_of_pos_left _ (Nat.one_le_pow _ _ hb1)))
+      calc Nat.size (objMax n (2 ^ β)) ≤ 2 * β + n.size + 15 := hso
+        _ ≤ 4 * (b ^ 2 * Y) + 17 * C₀ * (b ^ 2 * Y) := by omega
+        _ = (4 + 17 * C₀) * (b ^ 2 * Y) := by ring
+        _ ≤ (4 + 17 * C₀) * W := Nat.mul_le_mul_left _ w2
     calc K * (3 * K ^ 8 * (3 * K ^ 8) * 2 * Nat.size (objMax n (2 ^ β))) = 18 * (Nat.size (objMax n (2 ^ β)) * K ^ 17) := by ring
       _ ≤ 18 * ((4 + 17 * C₀) * W * n) := Nat.mul_le_mul_left _ (Nat.mul_le_mul h2 hn17)
       _ = 18 * (4 + 17 * C₀) * (W * n) := by ring
   · generalize Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ β) + 1) * (Nat.size (2 ^ β * n) + 2) + 8) = sl at hsl ⊢
-    have h1 : sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size) ≤ (10 + 34 * C₀) * (b * Y) := by
+    have h1 : sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size) ≤ (10 + 34 * C₀) * (b ^ 2 * Y) := by
+      have hbb : b ≤ b ^ 2 := Nat.le_self_pow (by norm_num) b
       have c1 : (k + 5) * n.size ≤ 2 * b * (17 * C₀ * Y) := Nat.mul_le_mul (by omega) hz
+      have c1' : 2 * b * (17 * C₀ * Y) ≤ 34 * C₀ * (b ^ 2 * Y) := by
+        calc 2 * b * (17 * C₀ * Y) = 34 * C₀ * (b * Y) := by ring
+          _ ≤ 34 * C₀ * (b ^ 2 * Y) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hbb)
       have e1 : (k + 3) * n.size + 2 * n.size = (k + 5) * n.size := by ring
-      have c2 : 4 * β + 5 * k + 29 ≤ 10 * b := by omega
-      calc sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size) ≤ (4 * β + 5 * k + 29) + (k + 5) * n.size := by omega
-        _ ≤ 10 * b + 2 * b * (17 * C₀ * Y) := Nat.add_le_add c2 c1
-        _ ≤ 10 * (b * Y) + 2 * b * (17 * C₀ * Y) := Nat.add_le_add_right (Nat.mul_le_mul_left _ a1) _
-        _ = (10 + 34 * C₀) * (b * Y) := by ring
-    calc K * (sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size)) ≤ n * ((10 + 34 * C₀) * (b * Y)) := Nat.mul_le_mul hKn h1
-      _ = (10 + 34 * C₀) * (b * Y * n) := by ring
-      _ ≤ (10 + 34 * C₀) * (W * n) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ w4)
+      have c2 : 4 * β + 5 * k + 34 ≤ 10 * b ^ 2 := by omega
+      have c3 : 10 * b ^ 2 ≤ 10 * (b ^ 2 * Y) := Nat.mul_le_mul_left _ (Nat.le_mul_of_pos_right _ hY)
+      calc sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size) ≤ (4 * β + 5 * k + 34) + (k + 5) * n.size := by omega
+        _ ≤ 10 * (b ^ 2 * Y) + 34 * C₀ * (b ^ 2 * Y) := Nat.add_le_add (c2.trans c3) (c1.trans c1')
+        _ = (10 + 34 * C₀) * (b ^ 2 * Y) := by ring
+    calc K * (sl + 2 + (β + 5 * k + 10 + (k + 3) * n.size)) ≤ n * ((10 + 34 * C₀) * (b ^ 2 * Y)) := Nat.mul_le_mul hKn h1
+      _ = (10 + 34 * C₀) * (b ^ 2 * Y * n) := by ring
+      _ ≤ (10 + 34 * C₀) * (W * n) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ w2)
 
 end VariableBound.ArithNat
 

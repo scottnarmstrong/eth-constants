@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -104,23 +105,24 @@ theorem LD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : LD Δ ≤ LD Δ' := Nat.clog_m
 /-- The bound on the number of objects grows with Δ. -/
 theorem objMax_mono (n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : objMax n Δ ≤ objMax n Δ' := by
   unfold objMax sbMax
-  exact Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (LD_mono h))) (Nat.mul_le_mul_right n h)
+  exact Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (LD_mono (VariableBound.Net.scaleD_mono h)))) (Nat.mul_le_mul_right n h)
 
 /-- The bounds on the total, on P, on the number of profiles and on the size s̄ of a check grow with
 Δ. -/
 theorem boundsGrowWithDelta : BoundsGrowWithDelta := by
   intro k K n Δ Δ' h
   have hLD := LD_mono h
+  have hLS := LD_mono (VariableBound.Net.scaleD_mono h)
   have hsb : sbMax Δ ≤ sbMax Δ' := by
     unfold sbMax
-    exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) hLD
+    exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) hLS
   have htb : tbMax n Δ ≤ tbMax n Δ' := by
     unfold tbMax
     have := Nat.clog_mono_right 2 (Nat.mul_le_mul_right n h)
     omega
   refine ⟨?_, ?_, ?_, hsb⟩
   · unfold UbD
-    exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left hLD n)) (Nat.mul_le_mul_left _ (VariableBound.Net.markD_mono h))) _
+    exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left hLD n)) (Nat.mul_le_mul_left _ (VariableBound.Net.lgD_mono h))) _
   · unfold PbD PD
     refine Nat.ceil_mono ?_
     unfold P0
@@ -189,11 +191,11 @@ theorem lg_le_of_le_pow {Δ j : ℕ} {a : ℝ} (hΔ : 1 ≤ Δ) (ha : 1 ≤ a) (
     norm_num
   linarith
 
-/-- If log n ≥ 900, then 29·(log n + 2) + 19 ≤ n. -/
-theorem lin_lg_le {n : ℕ} (hn : 1 ≤ n) (hL : 900 ≤ lg n) : 29 * (lg n + 2) + 19 ≤ (n : ℝ) := by
+/-- If log n ≥ 4225, then 64·(log n + 2) + 19 ≤ n. -/
+theorem lin_lg_le {n : ℕ} (hn : 1 ≤ n) (hL : 4225 ≤ lg n) : 64 * (lg n + 2) + 19 ≤ (n : ℝ) := by
   have h1 := lg_cube_le hn
-  have h2 : (30 * lg n) ^ 2 ≤ (n : ℝ) ^ 2 := by nlinarith [sq_nonneg (lg n)]
-  have h3 : 30 * lg n ≤ n := (sq_le_sq₀ (by linarith) (Nat.cast_nonneg n)).1 h2
+  have h2 : (65 * lg n) ^ 2 ≤ (n : ℝ) ^ 2 := by nlinarith [sq_nonneg (lg n)]
+  have h3 : 65 * lg n ≤ n := (sq_le_sq₀ (by linarith) (Nat.cast_nonneg n)).1 h2
   linarith
 
 /-- ⌈log₂(2Δ)⌉ ≤ log n + 2 for Δ ≤ n, n ≥ 1. -/
@@ -219,7 +221,7 @@ theorem LD_le_lg {Δ n : ℕ} (hn : 1 ≤ n) (h : Δ ≤ n) : (LD Δ : ℝ) ≤ 
 /-- «… so log Δ ≤ 3k·log(8k/e) + 2 = O(k·log(k/e)). As e ≥ (log n)^(−C₀) and k ≤ (log n)^(1/4), this
 is at most 3k(3 + (C₀ + 1/4)·log log n) + 2, which is at most 4kC₀·log log n for large n, because C₀
 ≥ 1» (Step 5 of Appendix D), for every Δ from 2 to the bound on the occurrences; with Δ ≤ n + 1 and
-n ≥ 29·⌈log₂(2Δ)⌉ + 19. -/
+n ≥ 64·⌈log₂(2Δ)⌉ + 19. -/
 theorem outputsAreWithinTheSetting : OutputsAreWithinTheSetting := by
   intro C₀ hC
   obtain ⟨n₀, hn₀⟩ := VariableBound.VariablesA.settingN0 VariableBound.paramIneq C₀ hC
@@ -281,7 +283,7 @@ theorem outputsAreWithinTheSetting : OutputsAreWithinTheSetting := by
   refine ⟨c1, c2, ⟨c3a, c3b⟩, by omega, ?_⟩
   have h1 := LD_le_lg hn1 c4
   have h2 := lin_lg_le hn1 (le_trans (by norm_num) hL)
-  have h3 : ((29 * LD Δ + 19 : ℕ) : ℝ) ≤ n := by
+  have h3 : ((64 * LD Δ + 19 : ℕ) : ℝ) ≤ n := by
     push_cast
     linarith
   exact_mod_cast h3

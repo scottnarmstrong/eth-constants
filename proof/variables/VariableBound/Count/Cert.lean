@@ -2,11 +2,15 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
 public import VariableBound.Count.Defs
 public import PaddedDescent.F.FuelCert
+import VariableBound.Params.Cert
+import VariableBound.Net.CertEv
 
 /-! # One sparse formula counted as in Steps 1 to 4 of Appendix D: the certificate
 
@@ -91,23 +95,23 @@ theorem countD_polyT (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCe
     {ψ : α → Fml} (hk : Unary k) (hn : Unary n) (hΔ : Unary Δ) (hp : PolyT pad) (hi : PolyT i) (hψ : PolyT ψ) :
     PolyT fun x => countD S (k x) (pad x) (i x) (n x) (Δ x) (ψ x) := by
   have hm : Unary fun x => (ψ x).length := Unary.of_length hψ
-  have hnb : Unary fun x => nbD (n x) (Δ x) := (hPar α n Δ n n n n hn hΔ hn hn hn hn).1
-  have hβ : Unary fun x => beta (n x) (ψ x).length (nbD (n x) (Δ x)) := (hPar α n Δ _ n _ n hn hΔ hm hn hnb hn).2.1
-  have hrb : Unary fun x => rbD (beta (n x) (ψ x).length (nbD (n x) (Δ x))) := (hPar α n Δ n _ n n hn hΔ hn hβ hn hn).2.2.1
-  have htb : Unary fun x => tbD (ψ x).length (nbD (n x) (Δ x)) (rbD (beta (n x) (ψ x).length (nbD (n x) (Δ x)))) :=
+  have hnb : Unary fun x => nbD (n x) (scaleD (Δ x)) := Cert.nbD_unary hn (Net.CertEv.scaleD_polyT hΔ.poly)
+  have hβ : Unary fun x => beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x))) := (hPar α n Δ _ n _ n hn hΔ hm hn hnb hn).2.1
+  have hrb : Unary fun x => rbD (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x)))) := (hPar α n Δ n _ n n hn hΔ hn hβ hn hn).2.2.1
+  have htb : Unary fun x => tbD (ψ x).length (nbD (n x) (scaleD (Δ x))) (rbD (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x))))) :=
     (hPar α n Δ _ n _ _ hn hΔ hm hn hnb hrb).2.2.2
-  have hM : PolyT fun x => Mb (beta (n x) (ψ x).length (nbD (n x) (Δ x))) (rbD (beta (n x) (ψ x).length (nbD (n x) (Δ x)))) := by
+  have hM : PolyT fun x => Mb (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x)))) (rbD (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x))))) := by
     unfold Mb
     exact PolyT.sub (PolyT.add hrb.poly hβ.poly) (PolyT.const 1)
-  have hfam : PolyT fun x => Fld.famD (ψ x).length (Nat.log 2 (nbD (n x) (Δ x))) := hFam α _ _ hm (log_unary hnb)
-  have hX : PolyT fun p : α × List (List ℕ) => evX S (k p.1) (pad p.1) (i p.1) (n p.1) (Δ p.1) (nbD (n p.1) (Δ p.1))
-      (Mb (beta (n p.1) (ψ p.1).length (nbD (n p.1) (Δ p.1))) (rbD (beta (n p.1) (ψ p.1).length (nbD (n p.1) (Δ p.1)))))
-      (beta (n p.1) (ψ p.1).length (nbD (n p.1) (Δ p.1))) (ψ p.1, p.2) :=
+  have hfam : PolyT fun x => Fld.famD (ψ x).length (Nat.log 2 (nbD (n x) (scaleD (Δ x)))) := hFam α _ _ hm (log_unary hnb)
+  have hX : PolyT fun p : α × List (List ℕ) => evX S (k p.1) (pad p.1) (i p.1) (n p.1) (Δ p.1) (nbD (n p.1) (scaleD (Δ p.1)))
+      (Mb (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1)))) (rbD (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1))))))
+      (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1)))) (ψ p.1, p.2) :=
     evX_polyT hEv hP (hk.comp PolyT.id'.fst) (hn.comp PolyT.id'.fst) (hΔ.comp PolyT.id'.fst) (hnb.comp PolyT.id'.fst).poly (PolyT.comp hM PolyT.id'.fst)
       (hβ.comp PolyT.id'.fst) (PolyT.comp hp PolyT.id'.fst) (PolyT.comp hi PolyT.id'.fst) (PolyT.prodMk (PolyT.comp hψ PolyT.id'.fst) PolyT.id'.snd)
-  have hsearch := hS α pad (fun x L => evX S (k x) (pad x) (i x) (n x) (Δ x) (nbD (n x) (Δ x))
-      (Mb (beta (n x) (ψ x).length (nbD (n x) (Δ x))) (rbD (beta (n x) (ψ x).length (nbD (n x) (Δ x)))))
-      (beta (n x) (ψ x).length (nbD (n x) (Δ x))) (ψ x, L)) _ _ _ _ _ _ hp hX hfam hm hnb hβ hrb htb
+  have hsearch := hS α pad (fun x L => evX S (k x) (pad x) (i x) (n x) (Δ x) (nbD (n x) (scaleD (Δ x)))
+      (Mb (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x)))) (rbD (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x))))))
+      (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x)))) (ψ x, L)) _ _ _ _ _ _ hp hX hfam hm hnb hβ hrb htb
   simp only [countD]
   exact PolyT.cond' (PolyT.decide_le hm.poly hnb.poly)
     (PolyT.toNat (evF_polyT hEv hP hk hn hΔ hnb.poly hM hp hi (PolyT.prodMk hψ (PolyT.const []))))

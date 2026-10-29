@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
 -/
 module
 
@@ -52,9 +54,9 @@ theorem of_BkD {C C₀ k ℓ : ℕ} (h : BkD C C₀ * k ^ 2 ≤ ℓ) : 2 * (102 
   unfold BkD at h
   rwa [show 2 * (102 * C₀ * (aU C C₀ * k)) ^ 2 = 2 * (102 * C₀ * aU C C₀) ^ 2 * k ^ 2 by ring]
 
-/-- The third test of the plan, 29·⌈log₂(2Δ)⌉ + 19 ≤ n for Δ = 2^β, is passed if β + 3 ≤ 2^β and
+/-- The third test of the plan, 64·⌈log₂(2Δ)⌉ + 19 ≤ n for Δ = 2^β, is passed if β + 3 ≤ 2^β and
 (2^β)⁶ ≤ n. -/
-theorem test3 {β n : ℕ} (hb : β + 3 ≤ 2 ^ β) (h6 : (2 ^ β) ^ 6 ≤ n) : 29 * LD (2 ^ β) + 19 ≤ n := by
+theorem test3 {β n : ℕ} (hb : β + 3 ≤ 2 ^ β) (h6 : (2 ^ β) ^ 6 ≤ n) : 64 * LD (2 ^ β) + 19 ≤ n := by
   rw [LD_two_pow]
   refine le_trans ?_ h6
   generalize 2 ^ β = D at hb
@@ -91,7 +93,7 @@ theorem planAtD_le (hN : StNeedD) (hP : StPlanLeD) (hPN : StPlanNeedD) (hM : StM
   have hsix := h6 (2 ^ betaU k s) (aU C C₀ * k) (S.K i) n C₀ ha1 hn1 hlt t4 t6
   have hMas := hM (betaU k s) (S.K i) C₀ e hbD hK heK hsix
   have t2 : 2 ^ betaU k s ≤ n + 1 := ((Nat.le_self_pow (by norm_num) _).trans (hsix.trans hKn)).trans (Nat.le_succ n)
-  have t3 : 29 * LD (2 ^ betaU k s) + 19 ≤ n := test3 hbD (hsix.trans hKn)
+  have t3 : 64 * LD (2 ^ betaU k s) + 19 ≤ n := test3 hbD (hsix.trans hKn)
   have hk2 : (0 : ℝ) ≤ (k : ℝ) ^ 2 := by positivity
   have hT : 0 ≤ (k : ℝ) ^ 2 * ((n : ℝ) * e * ((s : ℝ) + 1)) := mul_nonneg hk2 (hne.trans hneq)
   have eA : (AexpD C₀ : ℝ) * (k : ℝ) ^ 2 * n * e * ((s : ℝ) + 1) =

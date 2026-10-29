@@ -49,11 +49,11 @@ The function choosing the initial parameter now uses
 ## Mark bound: 8 existing proof files
 
 The budget function `UbD` of the variable route charges the marks of the
-parity checks through `markD`, which uses fewer marks than the upstream `14n`
-when the occurrence bound is large enough (see below). The new
-estimate is `VariableBound.Ineq.large_nine`. The program's counting steps are
-unchanged; its budget and the plan guard that uses it change, and the upstream
-theorems are re-proved for the revised budget. Modified files carry a
+parity checks through a bound on their number that is smaller than the
+upstream `14n`. The current bound, `2M ≤ 9n`, is described under the
+inclusion–exclusion cutoff below. The program's counting steps are unchanged
+by this step; its budget and the plan guard that uses it change, and the
+upstream theorems are re-proved for the revised budget. Modified files carry a
 modification notice.
 
 - [`proof/variables/RecursionToBound/Numbers.lean`](../proof/variables/RecursionToBound/Numbers.lean)
@@ -72,8 +72,7 @@ instead of `2^(betaU k s)`. For width at most three, `betaD` is the exponent of
 Calabro's bound on the occurrences at a leaf, plus 2, rounded up to a power of
 two; for larger widths it is `betaU`. `Serves.par` now states the bound for
 `betaD`. The depth of the sparsification tree, the stack of the walk and the
-plan's guard are unchanged. The mark bound above also gains a tier, `8n` for
-`Δ ≥ 2^21`, and its `9n` tier starts at `Δ ≥ 2^10`.
+plan's guard are unchanged. (The tiered mark bound of this step was later replaced; see below.)
 
 - [`proof/sparsification/StepSparsify/CalNumbers.lean`](../proof/sparsification/StepSparsify/CalNumbers.lean)
 - [`proof/sparsification/StepSparsify/CalServes.lean`](../proof/sparsification/StepSparsify/CalServes.lean)
@@ -87,6 +86,25 @@ plan's guard are unchanged. The mark bound above also gains a tier, `8n` for
 - [`proof/variables/VariableBound/Top/ArithNeed.lean`](../proof/variables/VariableBound/Top/ArithNeed.lean)
 - [`proof/variables/VariableBound/Top/ArithPlan.lean`](../proof/variables/VariableBound/Top/ArithPlan.lean)
 - [`proof/variables/VariableBound/Top/Defs.lean`](../proof/variables/VariableBound/Top/Defs.lean)
+
+## Inclusion–exclusion cutoff: 9 more existing proof files
+
+The variable route computes `n̄` for `scaleD Δ = 2^31·Δ^32` in place of `Δ`, so
+that `n̄` is about `n/(32 log₂ 2Δ)`; then `2M ≤ 9n` for every `Δ`
+(`VariableBound.Ineq.large_half`). The budget charges `9kn·lgD(Δ)` bits for
+the marks, with `lgD` taken for the larger checks. The plan's guard becomes `n ≥ 64·⌈log₂(2Δ)⌉ + 19`, and the
+lower-order estimates of `VariableBound.Top.ArithNat` (and the constant `GD`)
+grow accordingly. Besides files already listed above, these change:
+
+- [`proof/variables/RecursionToBound/Correct.lean`](../proof/variables/RecursionToBound/Correct.lean)
+- [`proof/variables/RecursionToBound/Defs.lean`](../proof/variables/RecursionToBound/Defs.lean)
+- [`proof/variables/VariableBound/Count/Cert.lean`](../proof/variables/VariableBound/Count/Cert.lean)
+- [`proof/variables/VariableBound/Count/Defs.lean`](../proof/variables/VariableBound/Count/Defs.lean)
+- [`proof/variables/VariableBound/Net/SizeU.lean`](../proof/variables/VariableBound/Net/SizeU.lean)
+- [`proof/variables/VariableBound/Top/ArithDefs.lean`](../proof/variables/VariableBound/Top/ArithDefs.lean)
+- [`proof/variables/VariableBound/Top/ArithNat.lean`](../proof/variables/VariableBound/Top/ArithNat.lean)
+- [`proof/variables/VariableBound/Top/ArithTop.lean`](../proof/variables/VariableBound/Top/ArithTop.lean)
+- [`proof/variables/VariableBound/Top/Correct.lean`](../proof/variables/VariableBound/Top/Correct.lean)
 
 ## Additions
 
