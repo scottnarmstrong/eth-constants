@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -124,8 +124,8 @@ and the inequalities of «Setting and parameters». For k = 1, where μ' = 0 and
 apply, T₀ = μ₀ = 0 and the cost is 0. -/
 theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hnb : IsNb n (scaleD Δ) nb) (hT : T ≤ (k - 1) * m)
     (hμ : μ ≤ (k - 1) * (nb + 1)) :
-    lg (T.choose μ) ≤ ((k - 1 : ℕ) : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) ∧
-      ((k - 1 : ℕ) : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) ≤ 3 * (k - 1 : ℕ) * (n + lg (2 * Δ)) := by
+    lg (T.choose μ) ≤ ((k - 1 : ℕ) : ℝ) * (nb + 1) * (6 * lg (2 * Δ)) ∧
+      ((k - 1 : ℕ) : ℝ) * (nb + 1) * (6 * lg (2 * Δ)) ≤ 3 * (k - 1 : ℕ) * (n + lg (2 * Δ)) := by
   obtain ⟨j, hj⟩ : ∃ j, j = k - 1 := ⟨_, rfl⟩
   rw [← hj] at hT hμ ⊢
   have hl := Ineq.two_le_lg hΔ
@@ -148,17 +148,17 @@ theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) 
         rw [div_le_div_iff₀ (by positivity) hnr]
         nlinarith [mul_le_mul_of_nonneg_right hT' hnr.le]
       have h4 := (hp.sb_lt2 n Δ m nb hΔ hm hnb).2
-      have h5 : lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ)) ≤ 5 * lg (2 * Δ) := by
+      have h5 : lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ)) ≤ 6 * lg (2 * Δ) := by
         have hs := Ineq.lg_two_scaleD Δ
         have hΔr : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
         have h1z : (1 : ℝ) ≤ 6 * Δ * lg (2 * scaleD Δ) := by rw [hs]; nlinarith
         exact (lg_le_lg (by positivity) (h3.trans h4.le) h1z).trans (Ineq.lg_six_le hΔ)
-      have h7 : max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) ≤ 5 * lg (2 * Δ) := max_le (by linarith) h5
+      have h7 : max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) ≤ 6 * lg (2 * Δ) := max_le (by linarith) h5
       calc lg (T.choose μ) ≤ ((j * (nb + 1) : ℕ) : ℝ) * max 1 (lg (3 * (T : ℝ) / ((j * (nb + 1) : ℕ) : ℝ))) := h2
-        _ ≤ ((j * (nb + 1) : ℕ) : ℝ) * (5 * lg (2 * Δ)) := mul_le_mul_of_nonneg_left h7 (Nat.cast_nonneg _)
-        _ = (j : ℝ) * (nb + 1) * (5 * lg (2 * Δ)) := by push_cast; ring
-  · have h1 : (j : ℝ) * ((nb : ℝ) * (32 * lg (2 * Δ))) ≤ j * n := mul_le_mul_of_nonneg_left hn hj0
-    have h2 : (j : ℝ) * (32 * lg (2 * Δ)) ≤ j * ((nb : ℝ) * (32 * lg (2 * Δ))) :=
+        _ ≤ ((j * (nb + 1) : ℕ) : ℝ) * (6 * lg (2 * Δ)) := mul_le_mul_of_nonneg_left h7 (Nat.cast_nonneg _)
+        _ = (j : ℝ) * (nb + 1) * (6 * lg (2 * Δ)) := by push_cast; ring
+  · have h1 : (j : ℝ) * ((nb : ℝ) * (128 * lg (2 * Δ))) ≤ j * n := mul_le_mul_of_nonneg_left hn hj0
+    have h2 : (j : ℝ) * (128 * lg (2 * Δ)) ≤ j * ((nb : ℝ) * (128 * lg (2 * Δ))) :=
       mul_le_mul_of_nonneg_left (le_mul_of_one_le_left (by linarith) hnb1) hj0
     nlinarith
 

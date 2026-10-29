@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -119,8 +119,8 @@ theorem planAtD_polyT (hP : S.Poly) {k n s : α → ℕ} {i : α → Idx} (hk : 
     unfold s0U
     exact PolyT.decide_le ((PolyT.const 2).mul (PolyT.size' hk')) hs'
   have hc2 : PolyT fun x => decide (2 ^ betaU (k x) (s x) ≤ n x + 1) := PolyT.decide_le hpow (PolyT.add hn' (PolyT.const 1))
-  have hc3 : PolyT fun x => decide (64 * LD (2 ^ betaU (k x) (s x)) + 19 ≤ n x) :=
-    PolyT.decide_le (((PolyT.const 64).mul (LD_polyT hpow)).add (PolyT.const 19)) hn'
+  have hc3 : PolyT fun x => decide (256 * LD (2 ^ betaU (k x) (s x)) + 19 ≤ n x) :=
+    PolyT.decide_le (((PolyT.const 256).mul (LD_polyT hpow)).add (PolyT.const 19)) hn'
   have hsum : PolyT fun q : α × ℕ => q.2 + restD (k q.1) (S.K (i q.1)) (n q.1) (s q.1) :=
     PolyT.add PolyT.id'.snd (PolyT.comp (f := fun x => restD (k x) (S.K (i x)) (n x) (s x)) hr PolyT.id'.fst)
   have hn2 : PolyT fun q : α × ℕ => n q.1 := PolyT.comp (f := n) hn' PolyT.id'.fst

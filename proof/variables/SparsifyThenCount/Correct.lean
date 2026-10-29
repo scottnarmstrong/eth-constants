@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
-Modified in eth-constants (2026): choose n̄ about n/(32·log(2Δ)) and bound the marks by 4.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
 -/
 module
 
@@ -21,7 +21,7 @@ import all VariableBound.Top.Correct
 that serves with the bound Lc on the occurrences. The width k and the formula are read from the
 input (`StDecM`). If the
 plan is `none`, the exponent is n and the function counts exhaustively (`StBruteC`). Otherwise the
-plan says that s ≥ s0U k, that Δ = 2^β ≤ n + 1, that n ≥ 64·⌈log₂(2Δ)⌉ + 19, and that the exponent
+plan says that s ≥ s0U k, that Δ = 2^β ≤ n + 1, that n ≥ 256·⌈log₂(2Δ)⌉ + 19, and that the exponent
 is `needD` and at most n. The plan, its tests and the
 exponent are those of the namespace `VariableBound` and do not name the thresholds, so the lemma on
 them, `planAtD_some`, serves here unchanged. Three things depend on the thresholds. The bound Lc k s +
@@ -73,9 +73,9 @@ public theorem stCorrectDG (hC : StCountD) (hB : StBudgetD) (hR : StRoundsDG) (h
       obtain ⟨⟨c1, c2, c3⟩, c6⟩ := planAtD_some hS hpl
       have hblock : blockD k n s = 2 ^ betaD k s := UniformInK.ArithNat.blockD_eq hk c2
       obtain ⟨Δ, hΔ⟩ : ∃ Δ, Δ = blockD k n s := ⟨_, rfl⟩
-      replace c3 : 64 * LD Δ + 19 ≤ n := by
+      replace c3 : 256 * LD Δ + 19 ≤ n := by
         rw [hΔ, hblock]
-        refine le_trans (Nat.add_le_add_right (Nat.mul_le_mul_left 64 (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2
+        refine le_trans (Nat.add_le_add_right (Nat.mul_le_mul_left 256 (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2
           (Nat.pow_le_pow_right (by norm_num) (UniformInK.ArithNat.betaD_le_betaU s hk))))) 19) c3
       rw [c6, needD, pow_add, ← hΔ] at hpad
       have hp1 : 2 ^ needNet S i (UbD k (S.K i) n Δ) (PbD (S.K i) n Δ) (BbD k n) ≤ pad.length :=

@@ -42,7 +42,7 @@ theorem needD_le_of_ub (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx : Type}
   have hUle : UbD k (S.K i) n (2 ^ betaD k s) ≤ UbD k (S.K i) n (2 ^ betaU k s) := by
     unfold UbD
     exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left
-      (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 hle)) n)) (Nat.mul_le_mul_left _ (Net.lgD_mono hle))) _
+      (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 hle)) n)) (Nat.mul_le_mul_left _ (Net.markH_mono hle))) _
   have hlamle := ArithNeed.lamS_le_lamS (S.K i) (3 * S.K i ^ 8) hUle hPle
   have r3' : (S.K i : ℝ) * (((S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) : ℕ) : ℝ) ≤
       ((19 + 140 * k + GD C₀ : ℕ) : ℝ) * (((WofU (betaU k s) (S.K i) : ℕ) : ℝ) * n) := by
@@ -117,21 +117,30 @@ theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU)
   simpa only [Nat.cast_add, Nat.cast_one] using h
 
 /-- At width three and precision four the networks are given Δ = 2^26, Calabro's occurrence bound
-rounded up; with n̄ chosen for `scaleD Δ` a mark costs 43 bits, and there are at most 4.5n marks. -/
+rounded up; with n̄ chosen for `scaleD Δ` a mark costs 45 bits, and there are at most 3.5n marks. -/
 theorem betaD_three_four : betaD 3 4 = 26 := by
   unfold betaD alpha3
   simp only [show (3 : ℕ) ≤ 3 from le_rfl, if_true]
   decide
 
 theorem ubD_precision_four_le (K n : ℕ) (hn : 486 ≤ n) :
-    UbD 3 K n (2 ^ betaD 3 4) ≤ 1180 * n + 18 * K ^ 16 := by
-  have h1 : lgD (2 ^ 26) = 43 := by
+    UbD 3 K n (2 ^ betaD 3 4) ≤ 964 * n + 18 * K ^ 16 := by
+  have h1 : lgD (2 ^ 26) = 45 := by
     unfold lgD
     rw [VariableBound.ArithNat.LD_scaleD_pow]
     decide
+  have h2 : lgD (min (2 ^ 26) (2 ^ 11)) = 29 := by
+    rw [min_eq_right (by norm_num)]
+    unfold lgD
+    rw [VariableBound.ArithNat.LD_scaleD_pow]
+    decide
+  have hm : markH (2 ^ 26) = 315 := by
+    unfold markH
+    rw [h1, h2]
+    decide
   rw [betaD_three_four]
   unfold UbD
-  rw [LD_two_pow, h1]
+  rw [LD_two_pow, hm]
   nlinarith only [hn]
 
 end ETHConstants.SATNeed
