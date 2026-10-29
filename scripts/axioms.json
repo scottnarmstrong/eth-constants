@@ -48,6 +48,10 @@
     "ETHConstants.SAT.y_tight",
     "ETHConstants.SAT.e_tight",
     "VariableBound.Ineq.large_nine",
+    "VariableBound.Ineq.large_eight",
+    "UniformInK.ArithNat.betaD_le_betaU",
+    "StepSparsify.lcCal_le_betaD",
+    "ETHConstants.SATNeed.betaD_three_four",
     "ETHConstants.SAT.level_eight_coefficient_lt",
     "ETHConstants.SAT.selected_at_target"
   ]

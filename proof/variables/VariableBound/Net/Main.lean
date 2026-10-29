@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
+Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
 -/
 module
 

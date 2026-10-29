@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -41,6 +43,17 @@ def s0U (k : ℕ) : ℕ := 2 * Nat.size k
 
 /-- 2^β, cut off at n + 1. The function uses the networks only if 2^β ≤ n + 1, and then this is 2^β. -/
 def blockU (k n s : ℕ) : ℕ := min (2 ^ betaU k s) (n + 1)
+
+/-- Calabro's α for width at most 3 and ε = 2^(−s): 2·2²·2^s·⌈log₂(32·2²·2^s)⌉ = 8·2^s·(s+7). -/
+def alpha3 (s : ℕ) : ℕ := 8 * 2 ^ s * (s + 7)
+
+/-- The exponent of the occurrence bound handed to the networks. For k ≤ 3, Calabro's thresholds
+leave at most 32α² + 4α + 4 occurrences of a variable at a leaf, α = `alpha3 s`, and 2^β with β =
+`betaD k s` is at least that plus 2; for k > 3 it is `betaU k s`. -/
+def betaD (k s : ℕ) : ℕ := if k ≤ 3 then Nat.clog 2 (32 * alpha3 s ^ 2 + 4 * alpha3 s + 6) else betaU k s
+
+/-- 2^(`betaD k s`), cut off at n + 1: the occurrence bound handed to the networks. -/
+def blockD (k n s : ℕ) : ℕ := min (2 ^ betaD k s) (n + 1)
 
 /-- The width, cut off at ⌊log₂(n+1)⌋. -/
 def kcU (k n : ℕ) : ℕ := min k (Nat.log 2 (n + 1))

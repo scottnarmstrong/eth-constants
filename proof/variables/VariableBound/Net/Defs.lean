@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
+Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
 -/
 module
 
@@ -324,10 +324,10 @@ def StUPrinted : Prop := ∀ (k g n Δ nb M : ℕ) (D : Dat) (fl : Bool) (y : �
 /-- ⌈log(96Δ·⌈log(2Δ)⌉)⌉: an upper bound for the number of bits of one mark of a check. -/
 def lgD (Δ : ℕ) : ℕ := Nat.clog 2 (96 * Δ * LD Δ)
 
-/-- The bits of the marks of the checks, per variable: M·⌈log(96Δ·log(2Δ))⌉ ≤ `markD Δ`·n. For Δ ≥
-2^15 the marks are at most 9n; for smaller Δ they are at most 14n, as in display (61). The second
-term makes `markD` grow with Δ. -/
-def markD (Δ : ℕ) : ℕ := max (9 * lgD Δ) (14 * lgD (min Δ (2 ^ 15)))
+/-- The bits of the marks of the checks, per variable: M·⌈log(96Δ·log(2Δ))⌉ ≤ `markD Δ`·n. The
+marks are at most 8n for Δ ≥ 2^21, at most 9n for Δ ≥ 2^10, and at most 14n otherwise, as in
+display (61). The cut-off arguments make `markD` grow with Δ. -/
+def markD (Δ : ℕ) : ℕ := max (8 * lgD Δ) (max (9 * lgD (min Δ (2 ^ 21))) (14 * lgD (min Δ (2 ^ 10))))
 
 /-- Display (68) with the logarithms rounded up and the marks bounded by `markD`, on g = 3K⁸ nodes:
 a number that can be computed and does not depend on the formula. -/
@@ -339,25 +339,33 @@ theorem lgD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : lgD Δ ≤ lgD Δ' :=
 
 /-- `markD` grows with Δ. -/
 theorem markD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : markD Δ ≤ markD Δ' :=
-  max_le_max (Nat.mul_le_mul_left 9 (lgD_mono h)) (Nat.mul_le_mul_left 14 (lgD_mono (min_le_min h le_rfl)))
+  max_le_max (Nat.mul_le_mul_left 8 (lgD_mono h)) (max_le_max (Nat.mul_le_mul_left 9 (lgD_mono (min_le_min h le_rfl)))
+    (Nat.mul_le_mul_left 14 (lgD_mono (min_le_min h le_rfl))))
 
 /-- `markD Δ` ≤ 14·`lgD Δ`, the bound with M ≤ 14n. -/
 theorem markD_le (Δ : ℕ) : markD Δ ≤ 14 * lgD Δ :=
-  max_le (by omega) (Nat.mul_le_mul_left 14 (lgD_mono (min_le_left _ _)))
+  max_le (by omega) (max_le ((Nat.mul_le_mul_left 9 (lgD_mono (min_le_left _ _))).trans (by omega))
+    (Nat.mul_le_mul_left 14 (lgD_mono (min_le_left _ _))))
 
-/-- The bits of M marks are at most `markD Δ`·n, if M ≤ 14n and, for Δ ≥ 2^15, M ≤ 9n. -/
-theorem mark_le {M n Δ : ℕ} (h14 : M ≤ 14 * n) (h9 : 2 ^ 15 ≤ Δ → M ≤ 9 * n) : M * lgD Δ ≤ markD Δ * n := by
-  rcases Nat.lt_or_ge Δ (2 ^ 15) with hlt | hge
-  · have h : 14 * lgD Δ ≤ markD Δ := by
-      unfold markD
-      rw [min_eq_left hlt.le]
-      exact le_max_right _ _
-    calc M * lgD Δ ≤ 14 * n * lgD Δ := Nat.mul_le_mul_right _ h14
-      _ = 14 * lgD Δ * n := Nat.mul_right_comm 14 n (lgD Δ)
+/-- The bits of M marks are at most `markD Δ`·n, if M ≤ 14n, M ≤ 9n for Δ ≥ 2^10 and M ≤ 8n for
+Δ ≥ 2^21. -/
+theorem mark_le {M n Δ : ℕ} (h14 : M ≤ 14 * n) (h9 : 2 ^ 10 ≤ Δ → M ≤ 9 * n) (h8 : 2 ^ 21 ≤ Δ → M ≤ 8 * n) :
+    M * lgD Δ ≤ markD Δ * n := by
+  have key : ∀ c : ℕ, M ≤ c * n → c * lgD Δ ≤ markD Δ → M * lgD Δ ≤ markD Δ * n := fun c hM h =>
+    calc M * lgD Δ ≤ c * n * lgD Δ := Nat.mul_le_mul_right _ hM
+      _ = c * lgD Δ * n := Nat.mul_right_comm c n (lgD Δ)
       _ ≤ markD Δ * n := Nat.mul_le_mul_right _ h
-  · calc M * lgD Δ ≤ 9 * n * lgD Δ := Nat.mul_le_mul_right _ (h9 hge)
-      _ = 9 * lgD Δ * n := Nat.mul_right_comm 9 n (lgD Δ)
-      _ ≤ markD Δ * n := Nat.mul_le_mul_right _ (le_max_left _ _)
+  rcases Nat.lt_or_ge Δ (2 ^ 10) with hlt | hge
+  · refine key 14 h14 ?_
+    unfold markD
+    rw [min_eq_left hlt.le]
+    exact (le_max_right _ _).trans (le_max_right _ _)
+  rcases Nat.lt_or_ge Δ (2 ^ 21) with hlt' | hge'
+  · refine key 9 (h9 hge) ?_
+    unfold markD
+    rw [min_eq_left hlt'.le]
+    exact (le_max_left _ _).trans (le_max_right _ _)
+  · exact key 8 (h8 hge') (le_max_left _ _)
 
 /-- P₀ = ⌈n/g⌉(1 + Δ(t̄ + 3)) + ⌈r̄/g⌉·s̄. -/
 def P0 (g n Δ tb rb : ℕ) (sb : ℚ) : ℚ := (qv g n : ℚ) * (1 + Δ * (tb + 3)) + (qv g rb : ℚ) * sb

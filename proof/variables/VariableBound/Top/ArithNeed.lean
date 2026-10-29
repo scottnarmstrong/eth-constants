@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -9,6 +11,8 @@ public import VariableBound.Top.ArithDefs
 import all ClauseBound.ParityChecks.ArithOL
 import all ClauseBound.TopN.Arith
 import ClauseBound.Alg.TopArith
+import UniformInK.Top.ArithNat
+import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -60,25 +64,72 @@ theorem lowerDR (hL : StLowerD) {k K n s C₀ : ℕ} (hβ1 : 1 ≤ betaU k s) (h
   · exact_mod_cast o8
   · exact_mod_cast o9
 
-/-- The exponent is at most the sum of its parts, if 2^β ≤ n + 1. -/
-theorem needD_le_sum {Idx : Type} [Enc Idx] (S : Solver Idx) (i : Idx) {k n s : ℕ} (hD : 2 ^ betaU k s ≤ n + 1) :
+/-! ### The bounds grow with Δ -/
+
+theorem sbMax_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : sbMax Δ ≤ sbMax Δ' := by
+  unfold sbMax
+  exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 h))
+
+theorem objMax_mono (n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : objMax n Δ ≤ objMax n Δ' := by
+  unfold objMax
+  exact Nat.add_le_add (Nat.mul_le_mul_left _ (sbMax_mono h)) (Nat.mul_le_mul_right n h)
+
+theorem PbD_mono (K n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : PbD K n Δ ≤ PbD K n Δ' := by
+  have htb : tbMax n Δ ≤ tbMax n Δ' := by
+    unfold tbMax
+    have := Nat.clog_mono_right 2 (Nat.mul_le_mul_right n h)
+    have := Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 h)
+    unfold LD
+    omega
+  unfold PbD PD
+  refine Nat.ceil_mono ?_
+  unfold P0
+  have a1 : (Δ : ℚ) ≤ Δ' := by exact_mod_cast h
+  have a2 : (tbMax n Δ : ℚ) ≤ tbMax n Δ' := by exact_mod_cast htb
+  have a3 : (sbMax Δ : ℚ) ≤ sbMax Δ' := by exact_mod_cast sbMax_mono h
+  gcongr
+
+theorem lamS_le_lamS (K g : ℕ) {U U' P P' : ℕ} (hU : U ≤ U') (hP : P ≤ P') : lamS K g U P ≤ lamS K g U' P' := by
+  unfold lamS
+  exact Nat.div_le_div_right (Nat.add_le_add (Nat.add_le_add_left (Nat.mul_le_mul_left K hU) _) (Nat.mul_le_mul_left g hP))
+
+theorem bitsS_le_bitsS (K g B : ℕ) {P P' : ℕ} (hP : P ≤ P') : bitsS K g P B ≤ bitsS K g P' B := by
+  unfold bitsS
+  exact Nat.add_le_add_right (Nat.mul_le_mul_right _ hP) _
+
+/-- The exponent is at most the sum of its parts, if k ≥ 1 and 2^β ≤ n + 1 for β = `betaU k s`. The
+networks have the occurrence bound Δ = 2^(`betaD k s`); the number of profiles, the list of checks
+and the network size are taken at 2^β ≥ Δ. -/
+theorem needD_le_sum {Idx : Type} [Enc Idx] (S : Solver Idx) (i : Idx) {k n s : ℕ} (hk : 1 ≤ k) (hD : 2 ^ betaU k s ≤ n + 1) :
     needD S k i n s ≤ 3 * S.K i ^ 8 * (S.K i).size + PbD (S.K i) n (2 ^ betaU k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) +
-      (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s)) +
-      S.need (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))) (),
-        List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n)) ()) +
+      (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) +
+      S.need (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s))) (),
+        List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n)) ()) +
       3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaU k s)) +
       (Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaU k s) + 1) * (Nat.size (2 ^ betaU k s * n) + 2) + 8) + 2 + (betaU k s + 5 * k + 10 + (k + 3) * n.size)) + n / 2 ^ s := by
-  have hblock : blockU k n s = 2 ^ betaU k s := min_eq_left hD
+  have hblock : blockD k n s = 2 ^ betaD k s := ArithNat.blockD_eq hk hD
+  have hle : 2 ^ betaD k s ≤ 2 ^ betaU k s := Nat.pow_le_pow_right (by norm_num) (ArithNat.betaD_le_betaU s hk)
+  have a2 : PbD (S.K i) n (2 ^ betaD k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) ≤ PbD (S.K i) n (2 ^ betaU k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) :=
+    Nat.mul_le_mul_right _ (PbD_mono _ _ hle)
+  have a5 : 3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaD k s)) ≤ 3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaU k s)) :=
+    Nat.mul_le_mul_left _ (Nat.size_le_size (objMax_mono n hle))
+  have a6 : Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaD k s) + 1) * (Nat.size (2 ^ betaD k s * n) + 2) + 8) ≤
+      Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaU k s) + 1) * (Nat.size (2 ^ betaU k s * n) + 2) + 8) :=
+    Nat.size_le_size (Nat.add_le_add_right (Nat.mul_le_mul (Nat.mul_le_mul_left _ (Nat.succ_le_succ (sbMax_mono hle)))
+      (Nat.add_le_add_right (Nat.size_le_size (Nat.mul_le_mul_right n hle)) 2)) 8)
   unfold needD needNet restD
   rw [hblock]
   generalize S.need _ = nd
   generalize 3 * S.K i ^ 8 * (S.K i).size = x1
-  generalize PbD (S.K i) n (2 ^ betaU k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) = x2
-  generalize (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s)) = x3
-  generalize 3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaU k s)) = x4
+  generalize PbD (S.K i) n (2 ^ betaD k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) = x2 at a2 ⊢
+  generalize PbD (S.K i) n (2 ^ betaU k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) = y2 at a2 ⊢
+  generalize (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) = x3
+  generalize 3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaD k s)) = x4 at a5 ⊢
+  generalize 3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaU k s)) = y4 at a5 ⊢
   generalize (k + 3) * n.size = x5
   generalize n / 2 ^ s = x6
-  generalize Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaU k s) + 1) * (Nat.size (2 ^ betaU k s * n) + 2) + 8) = x7
+  generalize Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaD k s) + 1) * (Nat.size (2 ^ betaD k s * n) + 2) + 8) = x7 at a6 ⊢
+  generalize Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaU k s) + 1) * (Nat.size (2 ^ betaU k s * n) + 2) + 8) = y7 at a6 ⊢
   omega
 
 /-- The last step between real numbers: from Z ≤ e·(140·k·n·b) + cA·(n·e), b ≤ ck·q, R₃ ≤ n·e and N
@@ -114,10 +165,24 @@ theorem needD_le (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx 
   have hn1 : 1 ≤ n := hK1.trans hKn
   obtain ⟨r1, r2, r3, r4, r5, r6, r7, r8, r9⟩ := lowerDR hL (k := k) (s := s) (C₀ := C₀) hβ1 hkβ hK hn17 hlt
   have harg := hA (betaU k s) k (S.K i) n C₀ hkβ hbD hK hn17 hlt hD
-  have hlam1 := one_le_lamS hK1 (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))
-  have hlamK := lamS_mul_le (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))
-  have hUb := hU (betaU k s) k (S.K i) n hβ1 hn1
-  have hB1 : 1 ≤ bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n) := by
+  have hβD := ArithNat.betaD_le_betaU s hk
+  have hle : 2 ^ betaD k s ≤ 2 ^ betaU k s := Nat.pow_le_pow_right (by norm_num) hβD
+  have hlam1 := one_le_lamS hK1 (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s))
+  have hlamK := lamS_mul_le (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s))
+  have hPle := PbD_mono (S.K i) n hle
+  have hUb : UbD k (S.K i) n (2 ^ betaD k s) ≤ 140 * k * n * (betaU k s + 1) + 18 * S.K i ^ 16 :=
+    (hU (betaD k s) k (S.K i) n ((by omega : 1 ≤ k + 3).trans (ArithNat.le_betaD s hk)) hn1).trans
+      (Nat.add_le_add_right (Nat.mul_le_mul_left _ (Nat.add_le_add_right hβD 1)) _)
+  have hUle : UbD k (S.K i) n (2 ^ betaD k s) ≤ UbD k (S.K i) n (2 ^ betaU k s) := by
+    unfold UbD
+    exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left
+      (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 hle)) n)) (Nat.mul_le_mul_left _ (Net.markD_mono hle))) _
+  have hlamle := lamS_le_lamS (S.K i) (3 * S.K i ^ 8) hUle hPle
+  have r3' : (S.K i : ℝ) * (((S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) : ℕ) : ℝ) ≤
+      ((19 + 140 * k + GD C₀ : ℕ) : ℝ) * (((WofU (betaU k s) (S.K i) : ℕ) : ℝ) * n) := by
+    refine le_trans ?_ r3
+    gcongr
+  have hB1 : 1 ≤ bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n) := by
     have b1 : 1 ≤ BbD k n := by unfold BbD BD; omega
     have b2 : 1 ≤ 2 * (3 * S.K i ^ 8) / S.K i := by
       rw [Arith.two_g_div hK1]
@@ -125,20 +190,25 @@ theorem needD_le (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx 
     unfold bitsS
     exact (Nat.mul_pos (Nat.mul_pos b1 (Nat.add_pos_left b2 _)) hK1).trans_le (Nat.le_add_left _ _)
   have hr := hrate _ _ hlam1 hB1
-  have hsum := needD_le_sum S i hD
-  have hlog : Real.logb 2 ((S.K i : ℝ) * ((lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s)) : ℝ) +
-      (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n) : ℝ))) ≤ ((5 * (17 * C₀ * (S.K i).size) + 16 : ℕ) : ℝ) := by
-    have h := logb_le_of_le_pow _ _ (Nat.mul_pos hK1 (Nat.add_pos_left hlam1 _)) harg
+  have hsum := needD_le_sum S i hk hD
+  have harg' : S.K i * (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) +
+      bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n)) ≤ 2 ^ (5 * (17 * C₀ * (S.K i).size) + 16) :=
+    (Nat.mul_le_mul_left _ (Nat.add_le_add hlamle (bitsS_le_bitsS _ _ _ hPle))).trans harg
+  have hlog : Real.logb 2 ((S.K i : ℝ) * ((lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) : ℝ) +
+      (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n) : ℝ))) ≤ ((5 * (17 * C₀ * (S.K i).size) + 16 : ℕ) : ℝ) := by
+    have h := logb_le_of_le_pow _ _ (Nat.mul_pos hK1 (Nat.add_pos_left hlam1 _)) harg'
     push_cast at h ⊢
     exact h
-  generalize S.need (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))) (),
-    List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n)) ()) = nd at hr hsum
-  generalize bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n) = Bt at hr hlog
-  generalize lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s)) = lam at hr hlog hsum r3 hlamK
-  have rU : ((UbD k (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) ≤ 140 * (k : ℝ) * n * ((betaU k s + 1 : ℕ) : ℝ) + ((18 * S.K i ^ 16 : ℕ) : ℝ) := by exact_mod_cast hUb
-  have rL : (lam : ℝ) * (S.K i : ℝ) ^ 3 ≤ (S.K i : ℝ) ^ 3 + (S.K i : ℝ) * ((UbD k (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) +
+  generalize S.need (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s))) (),
+    List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n)) ()) = nd at hr hsum
+  generalize bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaD k s)) (BbD k n) = Bt at hr hlog
+  generalize lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaD k s)) (PbD (S.K i) n (2 ^ betaD k s)) = lam at hr hlog hsum r3' hlamK
+  have rU : ((UbD k (S.K i) n (2 ^ betaD k s) : ℕ) : ℝ) ≤ 140 * (k : ℝ) * n * ((betaU k s + 1 : ℕ) : ℝ) + ((18 * S.K i ^ 16 : ℕ) : ℝ) := by exact_mod_cast hUb
+  have rL : (lam : ℝ) * (S.K i : ℝ) ^ 3 ≤ (S.K i : ℝ) ^ 3 + (S.K i : ℝ) * ((UbD k (S.K i) n (2 ^ betaD k s) : ℕ) : ℝ) +
       ((3 * S.K i ^ 8 * PbD (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) := by
-    exact_mod_cast hlamK
+    have : lam * S.K i ^ 3 ≤ S.K i ^ 3 + S.K i * UbD k (S.K i) n (2 ^ betaD k s) + 3 * S.K i ^ 8 * PbD (S.K i) n (2 ^ betaU k s) :=
+      hlamK.trans (Nat.add_le_add_left (Nat.mul_le_mul_left _ hPle) _)
+    exact_mod_cast this
   have rS : (needD S k i n s : ℝ) ≤ (((3 * S.K i ^ 8 * (S.K i).size : ℕ) : ℝ) + ((PbD (S.K i) n (2 ^ betaU k s) * (2 * (3 * S.K i ^ 8) / S.K i + 1) : ℕ) : ℝ) +
       (((S.K i - 1) * lam : ℕ) : ℝ) + (nd : ℝ) + ((3 * S.K i ^ 8 * (3 * S.K i ^ 8) * 2 * Nat.size (objMax n (2 ^ betaU k s)) : ℕ) : ℝ) +
       ((Nat.size (8 * (10 * n + 1) * (sbMax (2 ^ betaU k s) + 1) * (Nat.size (2 ^ betaU k s * n) + 2) + 8) + 2 + (betaU k s + 5 * k + 10 + (k + 3) * n.size) : ℕ) : ℝ)) +
@@ -154,7 +224,7 @@ theorem needD_le (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx 
   have hKr : (0 : ℝ) < (S.K i : ℝ) := by exact_mod_cast hK1
   have core := real_coreM (A := (A₁ : ℝ)) hKr he0 he1 (Nat.cast_nonneg n) (Nat.cast_nonneg C₀) (Nat.cast_nonneg _) (Nat.cast_nonneg _)
     (by norm_num) (Nat.cast_nonneg _) (Nat.cast_nonneg _) (Nat.cast_nonneg _) (by norm_num) (Nat.cast_nonneg _) (Nat.cast_nonneg _) (Nat.cast_nonneg _)
-    hM r1 r2 r3 r4 r5 r6 r7 r8 r9 rU rL hr hlog
+    hM r1 r2 r3' r4 r5 r6 r7 r8 r9 rU rL hr hlog
   have ecc : (3 + ((3 * GD C₀ : ℕ) : ℝ) + ((19 + 140 * k + GD C₀ : ℕ) : ℝ) + (GD C₀ : ℝ) + 18 + 1 + ((C₀ * (85 * C₀ + 16) : ℕ) : ℝ) + ((18 * (4 + 17 * C₀) : ℕ) : ℝ) +
       ((10 + 34 * C₀ : ℕ) : ℝ)) * (A₁ : ℝ) = ((ccD k C₀ * A₁ : ℕ) : ℝ) := by
     unfold ccD; push_cast; ring

@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -83,7 +85,7 @@ theorem stServesCal (hT : StCertThCal) : StServesCal where
     obtain ⟨-, c2, c3, c4⟩ := stTreeG stExactlyOne stCountOfExactlyOne stOutputsSame k (alphaS k s) n (bsumU (tauOf s) k * n) (thCal k s)
       (Cal.betaC (alphaS k s)) hk n2 (Cal.stThrCal (alphaS k s) k n1) hD ψ hψ
     exact ⟨(length_leaves_rootC _ _ _ _ _).le.trans (stCalLeaves k n s _ ψ hk hD hψ), c2, c3, c4⟩
-  par := fun k s hk hs => (stCalNumbers k s hk hs).2.2.2
+  par := fun k s hk hs => lcCal_le_betaD hk hs
   cert := fun _ _ _ _ _ hk h2 hs hx => polyT_stepCCal hT hk h2 hs hx
 
 /-- Calabro's thresholds serve. -/

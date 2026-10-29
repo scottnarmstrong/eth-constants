@@ -107,19 +107,19 @@ theorem main_small (l : ℕ) (hl : 32 ≤ l) :
     linarith only [he]
   · exact main_small_of33 l (by omega)
 
-/-- The exact network logarithm and the bound of 9n marks permit levels 26 through 31 at
-precision four. -/
-theorem main_small_four (l : ℕ) (hl : 26 ≤ l) :
-    (11539 : ℝ) * e rho 16 l + 1 / (2:ℝ)^4 < 1 := by
-  have hr : rho^l ≤ rho^26 := pow_le_pow_of_le_one
+/-- Calabro's occurrence bound and the bound of 8n marks permit levels 21 through 31 at precision
+four. -/
+theorem main_small_four (l : ℕ) (hl : 21 ≤ l) :
+    (1861 : ℝ) * e rho 16 l + 1 / (2:ℝ)^4 < 1 := by
+  have hr : rho^l ≤ rho^21 := pow_le_pow_of_le_one
     (by linarith [rho_ge]) rho_lt.le hl
   have he := (e_tight l (by omega)).trans (mul_le_mul_of_nonneg_left hr (by norm_num : (0:ℝ) ≤ 33/50))
-  have hpow : rho^26 = (1/2:ℝ)^13 := by
-    calc rho^26 = (rho^2)^13 := by ring
-      _ = (1/2:ℝ)^13 := by rw [rho_sq]
-  rw [hpow] at he
-  norm_num at he ⊢
-  linarith only [he]
+  have hpow : rho^21 ≤ (1/2:ℝ)^10 * (3/4) := by
+    calc rho^21 = (rho^2)^10 * rho := by ring
+      _ ≤ (1/2:ℝ)^10 * (3/4) := by rw [rho_sq]; exact mul_le_mul_of_nonneg_left rho_le (by positivity)
+  have he' := he.trans (mul_le_mul_of_nonneg_left hpow (by norm_num : (0:ℝ) ≤ 33/50))
+  norm_num at he' ⊢
+  linarith only [he']
 
 /-- A limitation of the level-eight budget certificate, not a runtime lower bound. -/
 theorem level_eight_coefficient_lt {a : ℝ} (ha : 0 ≤ a)
@@ -156,7 +156,7 @@ theorem size_K_le (l : ℕ) : (K 16 l).size ≤ 2^(l+6) := by
     exact_mod_cast this
   simpa [pow_add, Nat.mul_comm] using hx
 
-theorem W_small_nat (l : ℕ) (hl : 26 ≤ l) :
+theorem W_small_nat (l : ℕ) (hl : 21 ≤ l) :
     ccD 3 1157 * WofU (betaU 3 (precision l)) (K 16 l) * 2^(l+1) ≤ K 16 l := by
   have hc : ccD 3 1157 ≤ 2^27 := by norm_num [ccD, GD]
   have hb := beta_le l
@@ -181,7 +181,7 @@ theorem W_small_nat (l : ℕ) (hl : 26 ≤ l) :
       (by have := linear_le_x l (by omega); omega)
     _ = K 16 l := (K_eq 16 l).symm
 
-theorem W_small (l : ℕ) (hl : 26 ≤ l) :
+theorem W_small (l : ℕ) (hl : 21 ≤ l) :
     (WofU (betaU 3 (precision l)) (K 16 l) : ℝ) ≤
       (1 / (ccD 3 1157:ℝ)) * (K 16 l) * e rho 16 l := by
   have h := W_small_nat l hl
@@ -200,7 +200,7 @@ theorem W_small (l : ℕ) (hl : 26 ≤ l) :
     (le_div_iff₀ hc).2 (by simpa only [mul_comm] using hh)
   convert hh' using 1; ring
 
-theorem delta_six_le_K (l : ℕ) (hl : 26 ≤ l) :
+theorem delta_six_le_K (l : ℕ) (hl : 21 ≤ l) :
     (2^betaU 3 (precision l))^6 ≤ K 16 l := by
   rw [← pow_mul, K_eq]
   apply Nat.pow_le_pow_right (by norm_num)

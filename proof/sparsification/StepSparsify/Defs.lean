@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -58,8 +60,9 @@ structure Serves (Θ : ℕ → ℕ → ℕ → ℕ) (Lc : ℕ → ℕ → ℕ) :
     ∀ i, ((round (stepC (Θ k s) k))^[i] ([rootC (List.replicate n (), ψ)], [])).1.length ≤ bsumU (tauOf s) k * n + 1 ∧
       ∀ x ∈ ((round (stepC (Θ k s) k))^[i] ([rootC (List.replicate n (), ψ)], [])).1,
         x.1.length ≤ ψ.length * 2 ^ k ∧ x.2.length ≤ 2 * n ∧ (∀ C ∈ x.1, C.length ≤ k ∧ ∀ l ∈ C, l.1 < n) ∧ ∀ C ∈ x.2, C.length ≤ 2 ∧ ∀ l ∈ C, l.1 < n
-  /-- The bound on the occurrences, plus 2, is at most 2^(betaU k s) = 2^(2k(4s+17)). -/
-  par : ∀ k s : ℕ, 1 ≤ k → s0U k ≤ s → Lc k s + 2 ≤ 2 ^ betaU k s
+  /-- The bound on the occurrences, plus 2, is at most 2^(betaD k s), the occurrence bound handed
+  to the networks. -/
+  par : ∀ k s : ℕ, 1 ≤ k → s0U k ≤ s → Lc k s + 2 ≤ 2 ^ betaD k s
   /-- The two children of a node are polynomial-time jointly in k, s and the node, if k, 2^k and s
   are given in unary. -/
   cert : ∀ (α : Type) [Enc α] (k s : α → ℕ) (x : α → CNode), Unary k → (Unary fun a => 2 ^ k a) → Unary s → PolyT x →
