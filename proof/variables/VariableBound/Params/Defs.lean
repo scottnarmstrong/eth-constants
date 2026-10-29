@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
 -/
 module
 
@@ -60,6 +62,9 @@ structure ParamIneq : Prop where
   the text's n ≥ n₀): r̄ ≤ 10n and M ≤ 14n -/
   large : ∀ n Δ m nb rb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
     rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n
+  /-- the same with Δ ≥ 2^15: M ≤ 9n -/
+  large_nine : ∀ n Δ m nb rb : ℕ, 2 ^ 15 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
+    Mb (beta n m nb) rb ≤ 9 * n
   /-- for 2 ≤ Δ and any number r̄ ≤ 10n (as display (61) gives): p·r̄ < 22·log(2Δ) -/
   p_rb : ∀ n Δ nb rb : ℕ, 2 ≤ Δ → IsNb n Δ nb → rb ≤ 10 * n → ((pp nb : ℚ) : ℝ) * rb < 22 * lg (2 * Δ)
   /-- for 2 ≤ Δ, m ≥ 1, any number r̄ ≤ 10n (as display (61) gives) and the t̄ of the text for this

@@ -91,14 +91,26 @@ theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU)
   push_cast at h
   simpa only [Nat.cast_add, Nat.cast_one] using h
 
-/-- Evaluate the logarithm at precision four instead of using the uniform coefficient 140. -/
+/-- Evaluate the logarithm at precision four instead of using the uniform coefficient 140:
+there Δ = 2^198 ≥ 2^15, so the marks cost 9·213 bits per variable. -/
 theorem ubD_precision_four_le (K n : ℕ) (hn : 199 ≤ n) :
-    UbD 3 K n (2 ^ betaU 3 4) ≤ 17928 * n + 18 * K ^ 16 := by
-  have hc : Nat.clog 2 (96 * 2 ^ 198 * 199) = 213 := by decide
-  change UbD 3 K n (2 ^ 198) ≤ 17928 * n + 18 * K ^ 16
+    UbD 3 K n (2 ^ betaU 3 4) ≤ 11538 * n + 18 * K ^ 16 := by
+  have h1 : lgD (2 ^ 198) = 213 := by
+    unfold lgD
+    rw [LD_two_pow]
+    decide
+  have h2 : lgD (min (2 ^ 198) (2 ^ 15)) = 26 := by
+    rw [min_eq_right (by norm_num)]
+    unfold lgD
+    rw [LD_two_pow]
+    decide
+  have hm : markD (2 ^ 198) = 1917 := by
+    unfold markD
+    rw [h1, h2]
+    decide
+  change UbD 3 K n (2 ^ 198) ≤ 11538 * n + 18 * K ^ 16
   unfold UbD
-  rw [LD_two_pow]
-  rw [show 198 + 1 = 199 from rfl, hc]
+  rw [LD_two_pow, hm]
   nlinarith only [hn]
 
 end ETHConstants.SATNeed

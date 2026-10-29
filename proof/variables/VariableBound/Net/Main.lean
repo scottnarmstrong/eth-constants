@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
 -/
 module
 
@@ -114,7 +116,7 @@ theorem bounds : StBounds := FitL.stBounds p
 
 /-- «The total» and «The parameters» with bounds that do not depend on the formula, for K > 0, a
 list that is fit for an evaluation and an admissible profile (`StSize`). -/
-theorem size : StSize := FitL.stSize VariableBound.paramIneq uPrinted sized small
+theorem size : StSize := FitL.stSize VariableBound.paramIneq u sized small
 
 /-- Condition (iii) of the definition of a network: the lengths of the network of one profile are
 given in unary and its functions are polynomial-time (`StCertNet`). -/

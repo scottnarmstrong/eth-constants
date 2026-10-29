@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
 -/
 module
 
@@ -118,8 +120,7 @@ theorem boundsGrowWithDelta : BoundsGrowWithDelta := by
     omega
   refine ⟨?_, ?_, ?_, hsb⟩
   · unfold UbD
-    have h1 : Nat.clog 2 (96 * Δ * LD Δ) ≤ Nat.clog 2 (96 * Δ' * LD Δ') := Nat.clog_mono_right 2 (Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) hLD)
-    exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left hLD n)) (Nat.mul_le_mul_left _ h1)) _
+    exact Nat.add_le_add_right (Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.add_le_add_left hLD n)) (Nat.mul_le_mul_left _ (VariableBound.Net.markD_mono h))) _
   · unfold PbD PD
     refine Nat.ceil_mono ?_
     unfold P0

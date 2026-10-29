@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
 -/
 module
 
@@ -65,11 +67,20 @@ theorem sbMax_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => sbMax (�
 theorem objMax_unary {n Δ : α → ℕ} (hn : Unary n) (hΔ : Unary Δ) : Unary fun x => objMax (n x) (Δ x) :=
   (((Unary.const 10).mul hn).mul (sbMax_unary hΔ)).add (hΔ.mul hn)
 
+/-- ⌈log(96Δ·⌈log(2Δ)⌉)⌉ is given in unary if Δ is polynomial-time. -/
+theorem lgD_unary {Δ : α → ℕ} (hΔ : PolyT Δ) : Unary fun x => lgD (Δ x) :=
+  clog_unary (((PolyT.const 96).mul hΔ).mul (LD_unary hΔ).poly)
+
+/-- The bound on the bits of the marks per variable is given in unary if Δ is. -/
+theorem markD_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => markD (Δ x) :=
+  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 9).mul (lgD_unary hΔ.poly))
+    ((Unary.const 14).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 15))).poly))
+
 /-- The bound on the total U in «The total» of Step 3, with the logarithms rounded up, is given in
 unary if k, K, n and Δ are. -/
 theorem UbD_unary {k K n Δ : α → ℕ} (hk : Unary k) (hK : Unary K) (hn : Unary n) (hΔ : Unary Δ) : Unary fun x => UbD (k x) (K x) (n x) (Δ x) :=
   ((((Unary.const 6).mul hk).mul (hn.add (LD_unary hΔ.poly))).add
-    ((((Unary.const 28).mul hk).mul hn).mul (clog_unary (((PolyT.const 96).mul hΔ.poly).mul (LD_unary hΔ.poly).poly)))).add
+    ((((Unary.const 2).mul hk).mul hn).mul (markD_unary hΔ))).add
     ((Unary.const 2).mul (unary_pow_const (g_unary hK) 2))
 
 /-- The bound P that does not depend on the formula is given in unary if K, n and Δ are. -/
