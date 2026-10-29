@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -77,6 +79,49 @@ theorem b_le_DU {k : ℕ} (s : ℕ) (hk : 1 ≤ k) : betaU k s + 3 ≤ 2 ^ betaU
 theorem betaU_le_lin {k : ℕ} (s : ℕ) (hk : 1 ≤ k) : betaU k s + 1 ≤ 35 * k * (s + 1) := by
   unfold betaU
   nlinarith [Nat.zero_le (k * s)]
+
+/-- k + 3 ≤ `betaD k s` for k ≥ 1. -/
+theorem le_betaD {k : ℕ} (s : ℕ) (hk : 1 ≤ k) : k + 3 ≤ betaD k s := by
+  unfold betaD
+  split_ifs with h3
+  · have h64 : 64 ≤ 32 * alpha3 s ^ 2 + 4 * alpha3 s + 6 := by
+      have : 56 ≤ alpha3 s := by
+        unfold alpha3
+        have := Nat.one_le_two_pow (n := s)
+        nlinarith
+      nlinarith
+    have hc : Nat.clog 2 64 ≤ Nat.clog 2 (32 * alpha3 s ^ 2 + 4 * alpha3 s + 6) := Nat.clog_mono_right 2 h64
+    rw [show (64 : ℕ) = 2 ^ 6 by norm_num, Nat.clog_pow 2 6 (by norm_num)] at hc
+    omega
+  · unfold betaU
+    nlinarith [Nat.zero_le (k * s)]
+
+/-- `betaD k s` ≤ `betaU k s` for k ≥ 1. -/
+theorem betaD_le_betaU {k : ℕ} (s : ℕ) (hk : 1 ≤ k) : betaD k s ≤ betaU k s := by
+  unfold betaD
+  split_ifs with h3
+  · refine Nat.clog_le_of_le_pow ?_
+    have hs : s + 7 ≤ 2 ^ (s + 3) := by
+      have := Nat.lt_two_pow_self (n := s)
+      rw [pow_add]
+      omega
+    have ha : alpha3 s ≤ 2 ^ (2 * s + 6) := by
+      unfold alpha3
+      calc 8 * 2 ^ s * (s + 7) ≤ 8 * 2 ^ s * 2 ^ (s + 3) := Nat.mul_le_mul_left _ hs
+        _ = 2 ^ (2 * s + 6) := by rw [show (8 : ℕ) = 2 ^ 3 by norm_num, ← pow_add, ← pow_add]; congr 1; omega
+    have ha1 : 1 ≤ alpha3 s := by
+      unfold alpha3
+      have := Nat.one_le_two_pow (n := s)
+      nlinarith
+    calc 32 * alpha3 s ^ 2 + 4 * alpha3 s + 6 ≤ 64 * alpha3 s ^ 2 := by nlinarith
+      _ ≤ 64 * (2 ^ (2 * s + 6)) ^ 2 := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left ha 2)
+      _ = 2 ^ (4 * s + 18) := by rw [← pow_mul, show (64 : ℕ) = 2 ^ 6 by norm_num, ← pow_add]; congr 1; omega
+      _ ≤ 2 ^ betaU k s := Nat.pow_le_pow_right (by norm_num) (by unfold betaU; nlinarith [Nat.zero_le (k * s)])
+  · exact le_rfl
+
+/-- `blockD k n s` = 2^(`betaD k s`) if 2^(`betaU k s`) ≤ n + 1 and k ≥ 1. -/
+theorem blockD_eq {k n s : ℕ} (hk : 1 ≤ k) (hD : 2 ^ betaU k s ≤ n + 1) : blockD k n s = 2 ^ betaD k s :=
+  min_eq_left ((Nat.pow_le_pow_right (by norm_num) (betaD_le_betaU s hk)).trans hD)
 
 end UniformInK.ArithNat
 

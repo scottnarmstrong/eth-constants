@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
+Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
 -/
 module
 
@@ -188,23 +188,24 @@ theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP 
       rw [hβ1] at hr; push_cast at hr
       have : (0 : ℝ) ≤ LD Δ := by positivity
       linarith
-    have hr'' : rb + 1 ≤ 8 * n := by
+    have hr'' : rb + 1 ≤ 7 * n := by
       have h1 : (rb : ℝ) ≤ 2.41 * (n + 1) + 1 := by rw [hβ1] at hr; push_cast at hr; exact hr
       have h2 : (0 : ℝ) ≤ LD Δ := by positivity
-      have : ((rb + 1 : ℕ) : ℝ) ≤ ((8 * n : ℕ) : ℝ) := by push_cast; linarith
+      have : ((rb + 1 : ℕ) : ℝ) ≤ ((7 * n : ℕ) : ℝ) := by push_cast; linarith
       exact_mod_cast this
     have hF := (hFit k n Δ nb rb tb (Mb β rb) ψ [] hwf hΔ hocc hm hNb (by rw [hM]; omega)
-      (Net.mark_le (by rw [hM]; omega) fun _ => by rw [hM]; omega)).2 hc
+      (Net.mark_le (by rw [hM]; omega) (fun _ => by rw [hM]; omega) fun _ => by rw [hM]; omega)).2 hc
     refine Count.evF_eq hEv hNP hProd hC hok hK hfit hF (by rw [hβ, hM, List.length_nil]; omega) (by rw [hM, List.length_nil]; omega) ?_
     exact hEmpty (Fin n → Bool) (Fin ψ.length) (Vof (n := n) ψ) nb (by rw [Fintype.card_fin]; exact hc)
   · rw [decide_eq_false hc, cond_false]
     have hlt : nb < ψ.length := by omega
     obtain ⟨hrb10, hM14⟩ := hIneq.large n Δ ψ.length nb rb hΔ hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
-    have hM9 := fun h15 => hIneq.large_nine n Δ ψ.length nb rb h15 hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
-    rw [hβ] at hM14 hM9
+    have hM9 := fun h10 => hIneq.large_nine n Δ ψ.length nb rb h10 hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
+    have hM8 := fun h21 => hIneq.large_eight n Δ ψ.length nb rb h21 hlt hm hNb (by rw [hβ]; exact hRb) (by linarith)
+    rw [hβ] at hM14 hM9 hM8
     have htb : tb ≤ tbMax n Δ := hTb n Δ ψ.length tb (by omega) hm (hIneq.tb_le n Δ ψ.length nb rb tb hΔ (by omega) hNb hrb10 hTbI)
     have hfitL : ∀ L, StructD ψ.length nb rb tb L → Fit k n Δ nb (Mb β rb) (ψ, L) := fun L hL =>
-      (hFit k n Δ nb rb tb (Mb β rb) ψ L hwf hΔ hocc hm hNb hM14 (Net.mark_le hM14 hM9)).1 hlt hL hrb10 (by rw [hM]; omega) (by rw [hM]; omega) htb
+      (hFit k n Δ nb rb tb (Mb β rb) ψ L hwf hΔ hocc hm hNb hM14 (Net.mark_le hM14 hM9 hM8)).1 hlt hL hrb10 (by rw [hM]; omega) (by rw [hM]; omega) htb
     have hl1 : ∀ L, StructD ψ.length nb rb tb L → beta n ψ.length nb - 1 + L.length ≤ Mb β rb := fun L hL => by
       have := hL.1; rw [hβ, hM]; omega
     have hl2 : ∀ L, StructD ψ.length nb rb tb L → n + L.length ≤ Mb β rb := fun L hL => by

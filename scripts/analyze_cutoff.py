@@ -33,13 +33,13 @@ def recurrence_intervals(last):
         hi = (rho_hi + correction) * hi + 3 * reciprocal_hi
 
 
-COEFF = 11539  # 6*1917 + 18 + 18 + 1: marks 9n at 213 bits each, plus lower-order terms
+COEFF = 1861  # 6*304 + 18 + 18 + 1: marks 8n at 38 bits each (Delta = 2^26), plus lower-order terms
 
 
 def main():
     print(f"Level | log10(K_l^17) | e_l interval | {COEFF} e_l + 1/16 | coefficient ceiling")
     for level, lo, hi in recurrence_intervals(32):
-        if level not in (8, 9, 12, 16, 20, 22, 24, 25, 26, 28, 32):
+        if level not in (8, 9, 12, 16, 19, 20, 21, 22, 24, 26, 28, 32):
             continue
         with localcontext() as ctx:
             ctx.prec = 50
@@ -51,13 +51,13 @@ def main():
         # Exact rational checks, not comparisons of the displayed decimals.
         if level == 8:
             assert F(40259, 10**6) < lo <= hi < F(40261, 10**6)
-            assert COEFF * lo + F(1, 16) > 464
-        if level == 25:
+            assert COEFF * lo + F(1, 16) > 74
+        if level == 20:
             assert COEFF * lo + F(1, 16) > 1
-        if level == 26:
+        if level == 21:
             assert COEFF * hi + F(1, 16) < 1
-            # The Lean proof uses e_l <= 0.66 rho^l instead of the interval.
-            assert COEFF * F(33, 50) / 2**13 + F(1, 16) < 1
+            # The Lean proof uses e_l <= 0.66 rho^l and rho <= 3/4 instead of the interval.
+            assert COEFF * F(33, 50) * F(3, 4) / 2**10 + F(1, 16) < 1
     print("The tighter interval endpoints can round to identical displayed decimals.")
     print("Coefficient ceilings concern the displayed certificate at precision four;")
     print("they do not certify a redesigned reduction or its lower-order terms.")

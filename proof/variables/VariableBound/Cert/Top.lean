@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -52,7 +54,7 @@ theorem restD_aux {Z₁ Z₂ B z q : α → ℕ} (hk : PolyT k) (hK : PolyT K) (
 /-- The exponent for everything but the networks is polynomial-time if k, K, n and s are given in
 unary. -/
 theorem restD_polyT (hk : Unary k) (hK : Unary K) (hn : Unary n) (hs : Unary s) : PolyT fun x => restD (k x) (K x) (n x) (s x) := by
-  have hD := blockU_unary hk hn hs
+  have hD := blockD_unary hk hn hs
   have hn' := hn.poly
   unfold restD
   exact restD_aux hk.poly hK.poly (PolyT.size' (objMax_unary hn hD).poly)
@@ -103,7 +105,7 @@ polynomial-time. -/
 theorem planAtD_polyT (hP : S.Poly) {k n s : α → ℕ} {i : α → Idx} (hk : Unary k) (hn : Unary n) (hi : PolyT i) (hs : Unary s) :
     PolyT fun x => planAtD S (k x) (n x) (i x) (s x) := by
   have hK : Unary fun x => S.K (i x) := hP.K.comp hi
-  have hD := blockU_unary hk hn hs
+  have hD := blockD_unary hk hn hs
   have hU := UbD_unary hk hK hn hD
   have hQ := PbD_unary hK hn hD
   have hr := restD_polyT hk hK hn hs
@@ -121,8 +123,8 @@ theorem planAtD_polyT (hP : S.Poly) {k n s : α → ℕ} {i : α → Idx} (hk : 
   have hsum : PolyT fun q : α × ℕ => q.2 + restD (k q.1) (S.K (i q.1)) (n q.1) (s q.1) :=
     PolyT.add PolyT.id'.snd (PolyT.comp (f := fun x => restD (k x) (S.K (i x)) (n x) (s x)) hr PolyT.id'.fst)
   have hn2 : PolyT fun q : α × ℕ => n q.1 := PolyT.comp (f := n) hn' PolyT.id'.fst
-  have hin : PolyT fun x => (needNetC S (List.replicate (n x) ()) (i x) (UbD (k x) (S.K (i x)) (n x) (blockU (k x) (n x) (s x)))
-      (PbD (S.K (i x)) (n x) (blockU (k x) (n x) (s x))) (BbD (k x) (n x))).bind fun v =>
+  have hin : PolyT fun x => (needNetC S (List.replicate (n x) ()) (i x) (UbD (k x) (S.K (i x)) (n x) (blockD (k x) (n x) (s x)))
+      (PbD (S.K (i x)) (n x) (blockD (k x) (n x) (s x))) (BbD (k x) (n x))).bind fun v =>
       if v + restD (k x) (S.K (i x)) (n x) (s x) ≤ n x then some (v + restD (k x) (S.K (i x)) (n x) (s x)) else none :=
     PolyT.optionBind (PolyT.ite' (PolyT.decide_le hsum hn2) (PolyT.some' hsum) (PolyT.const none)) hnet
   unfold planAtD

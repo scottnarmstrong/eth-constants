@@ -3,7 +3,7 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): bound the marks by 9n instead of 14n when Δ ≥ 2^15.
+Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
 -/
 module
 
@@ -73,8 +73,9 @@ theorem lgD_unary {Δ : α → ℕ} (hΔ : PolyT Δ) : Unary fun x => lgD (Δ x)
 
 /-- The bound on the bits of the marks per variable is given in unary if Δ is. -/
 theorem markD_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => markD (Δ x) :=
-  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 9).mul (lgD_unary hΔ.poly))
-    ((Unary.const 14).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 15))).poly))
+  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 8).mul (lgD_unary hΔ.poly))
+    (ClauseBound.Alg.CertGridG.unary_max ((Unary.const 9).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 21))).poly))
+      ((Unary.const 14).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 10))).poly)))
 
 /-- The bound on the total U in «The total» of Step 3, with the logarithms rounded up, is given in
 unary if k, K, n and Δ are. -/

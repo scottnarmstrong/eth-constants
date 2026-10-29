@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -122,5 +124,31 @@ theorem stCalNumbers : StCalNumbers := by
         exact Nat.mul_le_mul_left _ (by omega)
       rw [lcCal, thCal]
       omega
+
+/-- For k ≤ 3, α = `alpha3 s`. -/
+theorem alphaS_le_three {k : ℕ} (s : ℕ) (hk : k ≤ 3) : alphaS k s = alpha3 s := by
+  rw [stAlphaS, show max k 3 = 3 by omega, alpha3]
+  rw [show 32 * (3 - 1) ^ 2 * 2 ^ s = 2 ^ (s + 7) by rw [pow_add]; ring, Nat.clog_pow 2 _ (by norm_num)]
+  ring
+
+/-- Calabro's bound on the occurrences, plus 2, is at most 2^(`betaD k s`), for k ≥ 1 and s ≥
+`s0U k`. For k ≤ 3 it is at most 32α² + 4α + 6. -/
+theorem lcCal_le_betaD {k s : ℕ} (hk : 1 ≤ k) (hs : s0U k ≤ s) : lcCal k s + 2 ≤ 2 ^ betaD k s := by
+  by_cases h3 : k ≤ 3
+  · have hb : betaD k s = Nat.clog 2 (32 * alpha3 s ^ 2 + 4 * alpha3 s + 6) := by unfold betaD; simp [h3]
+    rw [hb]
+    refine le_trans ?_ (Nat.le_pow_clog (by norm_num) _)
+    have hsub : ∑ j ∈ range k, thCal k s j ≤ ∑ j ∈ range 3, thCal k s j :=
+      Finset.sum_le_sum_of_subset (Finset.range_subset_range.2 h3)
+    have t1 : ∀ a : ℕ, Cal.thetaC a 1 = 2 * a := fun a => by simp [Cal.thetaC, Cal.betaC]; ring
+    have t2 : ∀ a : ℕ, Cal.thetaC a 2 = 16 * a ^ 2 := fun a => by simp [Cal.thetaC, Cal.betaC]; ring
+    have h3sum : ∑ j ∈ range 3, thCal k s j = 2 + 2 * alpha3 s + 16 * alpha3 s ^ 2 := by
+      simp only [Finset.sum_range_succ, Finset.sum_range_zero, thCal, alphaS_le_three s h3, t1, t2]
+      simp [Cal.thetaC]
+    unfold lcCal
+    omega
+  · have hb : betaD k s = betaU k s := by unfold betaD; simp [h3]
+    rw [hb]
+    exact (stCalNumbers k s hk hs).2.2.2
 
 end StepSparsify

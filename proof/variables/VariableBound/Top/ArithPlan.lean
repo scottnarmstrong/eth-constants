@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -28,7 +30,7 @@ theorem stPlanLeD : StPlanLeD := by
   intro Idx _ S k n i s
   unfold planAtD
   split_ifs with hc
-  · cases needNetC S (List.replicate n ()) i (UbD k (S.K i) n (blockU k n s)) (PbD (S.K i) n (blockU k n s)) (BbD k n) with
+  · cases needNetC S (List.replicate n ()) i (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s)) (BbD k n) with
     | none => simp
     | some v =>
       simp only [Option.bind_some]
@@ -42,10 +44,10 @@ solver is polynomial-time. -/
 theorem stPlanNeedD : StPlanNeedD := by
   intro Idx _ S hS k n i s t1 t2 t3
   unfold planAtD needNetC needD needNet
-  set x : Idx × U × U := (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (blockU k n s)) (PbD (S.K i) n (blockU k n s))) (),
-    List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (blockU k n s)) (BbD k n)) ()) with hx
-  set u := max (3 * S.K i ^ 8 * Nat.size (S.K i)) (PbD (S.K i) n (blockU k n s) * (2 * (3 * S.K i ^ 8) / S.K i + 1))
-  set d := (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (blockU k n s)) (PbD (S.K i) n (blockU k n s))
+  set x : Idx × U × U := (i, List.replicate (lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s))) (),
+    List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (blockD k n s)) (BbD k n)) ()) with hx
+  set u := max (3 * S.K i ^ 8 * Nat.size (S.K i)) (PbD (S.K i) n (blockD k n s) * (2 * (3 * S.K i ^ 8) / S.K i + 1))
+  set d := (S.K i - 1) * lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s))
   set r := restD k (S.K i) n s
   rw [if_pos ⟨t1, t2, t3⟩]
   cases h : S.needC (List.replicate n (), x) with

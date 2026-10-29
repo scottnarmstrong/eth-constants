@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -18,8 +20,10 @@ merge with the algorithm for the bound in m are those of that file, and its defi
 What differs:
 * a leaf of the counting tree is counted by `countD` (Steps 1 to 4 of Appendix D as printed) in
   place of `countOL`;
-* the plan has three tests in place of five: s ≥ `s0U k`; 2^β ≤ n + 1; n ≥ 29·⌈log₂(2Δ)⌉ + 19, which
-  gives the bounds r̄ ≤ 10n and M ≤ 14n of the Setting of Appendix D. There is no parameter a.
+* the plan has three tests in place of five: s ≥ `s0U k`; 2^β ≤ n + 1; n ≥ 29·⌈log₂(2·2^β)⌉ + 19,
+  which gives the bounds r̄ ≤ 10n and M ≤ 14n of the Setting of Appendix D. There is no parameter a;
+* the networks are given the occurrence bound Δ = 2^(`betaD k s`) ≤ 2^β, which for k ≤ 3 is that
+  of Calabro's thresholds.
 The text assumes 3 ≤ k ≤ (log n)^(1/4) and n ≥ n₀ and falls back on exhaustive counting otherwise
 (Step 6). A program must compute its tests, so these three take that place.
 This file has definitions only. The statements `St…` are propositions; one file proves each of them. -/
@@ -35,19 +39,20 @@ variable {Idx : Type} [Enc Idx] (S : Solver Idx)
 
 /-! ### The functions -/
 
-/-- The count of the formula of a node of the counting tree. Δ = 2^β, cut off at n + 1. -/
-def valD (k : ℕ) (pad : U) (i : Idx) (n s : ℕ) (x : CNode) : ℕ := countD S k pad i n (blockU k n s) (leafM x)
+/-- The count of the formula of a node of the counting tree. Δ = 2^β with β = `betaD k s`, cut off
+at n + 1. -/
+def valD (k : ℕ) (pad : U) (i : Idx) (n s : ℕ) (x : CNode) : ℕ := countD S k pad i n (blockD k n s) (leafM x)
 
 /-- The exponent of a pad that suffices for everything but the networks: the list of profiles, the
 list of checks, the rounds of the walk, the stack of the walk. -/
 def restD (k K n s : ℕ) : ℕ :=
-  3 * K ^ 8 * (3 * K ^ 8) * 2 * Nat.size (objMax n (blockU k n s)) +
-    Nat.size (8 * (10 * n + 1) * (sbMax (blockU k n s) + 1) * (Nat.size (blockU k n s * n) + 2) + 8) + (n / 2 ^ s + 2) +
+  3 * K ^ 8 * (3 * K ^ 8) * 2 * Nat.size (objMax n (blockD k n s)) +
+    Nat.size (8 * (10 * n + 1) * (sbMax (blockD k n s) + 1) * (Nat.size (blockD k n s * n) + 2) + 8) + (n / 2 ^ s + 2) +
     (betaU k s + 5 * k + 10 + (k + 3) * Nat.size n)
 
 /-- The exponent of a pad that suffices for n variables at the index i with precision s. -/
 def needD (k : ℕ) (i : Idx) (n s : ℕ) : ℕ :=
-  needNet S i (UbD k (S.K i) n (blockU k n s)) (PbD (S.K i) n (blockU k n s)) (BbD k n) + restD k (S.K i) n s
+  needNet S i (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s)) (BbD k n) + restD k (S.K i) n s
 
 /-- If s ≥ s0U k, 2^β ≤ n + 1 and n ≥ 29·⌈log₂(2·2^β)⌉ + 19 (β = betaU k s), and the exponent of the
 networks, computed under the bound n, exists and plus `restD` is at most n: that sum (which is
@@ -55,7 +60,7 @@ networks, computed under the bound n, exists and plus `restD` is at most n: that
 `Correct.planAtD_some`). Otherwise `none`, and exhaustive counting is used. -/
 def planAtD (k n : ℕ) (i : Idx) (s : ℕ) : Option ℕ :=
   if s0U k ≤ s ∧ 2 ^ betaU k s ≤ n + 1 ∧ 29 * LD (2 ^ betaU k s) + 19 ≤ n then
-    (needNetC S (List.replicate n ()) i (UbD k (S.K i) n (blockU k n s)) (PbD (S.K i) n (blockU k n s)) (BbD k n)).bind fun v =>
+    (needNetC S (List.replicate n ()) i (UbD k (S.K i) n (blockD k n s)) (PbD (S.K i) n (blockD k n s)) (BbD k n)).bind fun v =>
       if v + restD k (S.K i) n s ≤ n then some (v + restD k (S.K i) n s) else none
   else none
 
@@ -86,8 +91,8 @@ end
 2^(restD …) suffices for the list of profiles, the list of checks, the rounds of the walk and its
 stack. -/
 def StBudgetD : Prop := ∀ k K n s F : ℕ, 1 ≤ k → s0U k ≤ s → 2 ^ restD k K n s ≤ F →
-  nPrMax K n (blockU k n s) ≤ F ∧
-  8 * (10 * n + 1) * (sbMax (blockU k n s) + 1) * (Nat.size (blockU k n s * n) + 2) + 8 ≤ F ∧
+  nPrMax K n (blockD k n s) ≤ F ∧
+  8 * (10 * n + 1) * (sbMax (blockD k n s) + 1) * (Nat.size (blockD k n s * n) + 2) + 8 ≤ F ∧
   2 * (∑ j ∈ Finset.range (k * n / tauOf s + 1), (bsumU (tauOf s) k * n).choose j) ≤ F + 1 ∧ stackLenCU k (tauOf s) n (inLen k n) ≤ F
 
 /-! ### The exponents -/

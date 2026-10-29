@@ -2,10 +2,13 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
 public import SparsifyThenCount.Defs
+import UniformInK.Top.ArithNat
 import CountKSatRate.Leaf
 import all CountKSat.Top.Count
 import all UniformInK.Top.Correct
@@ -67,9 +70,12 @@ public theorem stCorrectDG (hC : StCountD) (hB : StBudgetD) (hR : StRoundsDG) (h
     | some v =>
       rw [hpl, Option.getD_some] at hpad
       obtain ⟨⟨c1, c2, c3⟩, c6⟩ := planAtD_some hS hpl
-      have hblock : blockU k n s = 2 ^ betaU k s := min_eq_left c2
-      obtain ⟨Δ, hΔ⟩ : ∃ Δ, Δ = blockU k n s := ⟨_, rfl⟩
-      rw [← hblock, ← hΔ] at c3
+      have hblock : blockD k n s = 2 ^ betaD k s := UniformInK.ArithNat.blockD_eq hk c2
+      obtain ⟨Δ, hΔ⟩ : ∃ Δ, Δ = blockD k n s := ⟨_, rfl⟩
+      replace c3 : 29 * LD Δ + 19 ≤ n := by
+        rw [hΔ, hblock]
+        refine le_trans (Nat.add_le_add_right (Nat.mul_le_mul_left 29 (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2
+          (Nat.pow_le_pow_right (by norm_num) (UniformInK.ArithNat.betaD_le_betaU s hk))))) 19) c3
       rw [c6, needD, pow_add, ← hΔ] at hpad
       have hp1 : 2 ^ needNet S i (UbD k (S.K i) n Δ) (PbD (S.K i) n Δ) (BbD k n) ≤ pad.length :=
         le_trans (Nat.le_mul_of_pos_right _ (Nat.two_pow_pos _)) hpad

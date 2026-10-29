@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
 -/
 module
 
@@ -75,12 +77,12 @@ theorem stCertDG (hW : StepSparsify.StCertWalkSG) (hN : StepSparsify.StCertNoTau
   have hk1 : Unary fun q : (List Bool × U) × CNode => kcU (kU q.1.1) (nU q.1.1) := hkc.comp (h := fun q : (List Bool × U) × CNode => q.1) (by fun_prop)
   have hn1 : Unary fun q : (List Bool × U) × CNode => nU q.1.1 := hn.comp (h := fun q : (List Bool × U) × CNode => q.1) (by fun_prop)
   have hs1 : Unary fun q : (List Bool × U) × CNode => precU pick slU q.1.1 := hs.comp (h := fun q : (List Bool × U) × CNode => q.1) (by fun_prop)
-  have hD1 := blockU_unary hk1 hn1 hs1
+  have hD1 := blockD_unary hk1 hn1 hs1
   have hi1 : PolyT fun q : (List Bool × U) × CNode => idxU pick q.1.1 := PolyT.comp (g := fun q : (List Bool × U) × CNode => q.1.1) hi0 (by fun_prop)
   have hv : PolyT fun q : (List Bool × U) × CNode =>
       valD S (kcU (kU q.1.1) (nU q.1.1)) q.1.2 (idxU pick q.1.1) (fmlOf q.1.1).1.length (precU pick slU q.1.1) q.2 := by
     have hg : PolyT fun q : (List Bool × U) × CNode => (List.replicate (kcU (kU q.1.1) (nU q.1.1)) (), q.1.2, idxU pick q.1.1,
-        (List.replicate (nU q.1.1) (), List.replicate (blockU (kcU (kU q.1.1) (nU q.1.1)) (nU q.1.1) (precU pick slU q.1.1)) ()), leafM q.2) :=
+        (List.replicate (nU q.1.1) (), List.replicate (blockD (kcU (kU q.1.1) (nU q.1.1)) (nU q.1.1) (precU pick slU q.1.1)) ()), leafM q.2) :=
       PolyT.prodMk hk1 (PolyT.prodMk (by fun_prop) (PolyT.prodMk hi1 (PolyT.prodMk (PolyT.prodMk hn1 hD1) (by fun_prop))))
     refine (PolyT.comp (hC Idx S hP) hg).congr fun q => ?_
     simp only [List.length_replicate]

@@ -49,8 +49,8 @@ The function choosing the initial parameter now uses
 ## Mark bound: 8 existing proof files
 
 The budget function `UbD` of the variable route charges the marks of the
-parity checks through `markD`, which uses at most `9n` marks when the
-occurrence bound is at least `2^15` and the upstream `14n` otherwise. The new
+parity checks through `markD`, which uses fewer marks than the upstream `14n`
+when the occurrence bound is large enough (see below). The new
 estimate is `VariableBound.Ineq.large_nine`. The program's counting steps are
 unchanged; its budget and the plan guard that uses it change, and the upstream
 theorems are re-proved for the revised budget. Modified files carry a
@@ -64,6 +64,29 @@ modification notice.
 - [`proof/variables/VariableBound/Net/Main.lean`](../proof/variables/VariableBound/Net/Main.lean)
 - [`proof/variables/VariableBound/Params/Defs.lean`](../proof/variables/VariableBound/Params/Defs.lean)
 - [`proof/variables/VariableBound/Params/Ineq.lean`](../proof/variables/VariableBound/Params/Ineq.lean)
+
+## Occurrence bound: 12 existing proof files
+
+The variable route hands its networks the occurrence bound `2^(betaD k s)`
+instead of `2^(betaU k s)`. For width at most three, `betaD` is the exponent of
+Calabro's bound on the occurrences at a leaf, plus 2, rounded up to a power of
+two; for larger widths it is `betaU`. `Serves.par` now states the bound for
+`betaD`. The depth of the sparsification tree, the stack of the walk and the
+plan's guard are unchanged. The mark bound above also gains a tier, `8n` for
+`Δ ≥ 2^21`, and its `9n` tier starts at `Δ ≥ 2^10`.
+
+- [`proof/sparsification/StepSparsify/CalNumbers.lean`](../proof/sparsification/StepSparsify/CalNumbers.lean)
+- [`proof/sparsification/StepSparsify/CalServes.lean`](../proof/sparsification/StepSparsify/CalServes.lean)
+- [`proof/sparsification/StepSparsify/Defs.lean`](../proof/sparsification/StepSparsify/Defs.lean)
+- [`proof/sparsification/UniformInK/Cert/Top.lean`](../proof/sparsification/UniformInK/Cert/Top.lean)
+- [`proof/sparsification/UniformInK/Top/ArithNat.lean`](../proof/sparsification/UniformInK/Top/ArithNat.lean)
+- [`proof/sparsification/UniformInK/Top/Defs.lean`](../proof/sparsification/UniformInK/Top/Defs.lean)
+- [`proof/variables/SparsifyThenCount/CertTop.lean`](../proof/variables/SparsifyThenCount/CertTop.lean)
+- [`proof/variables/SparsifyThenCount/Correct.lean`](../proof/variables/SparsifyThenCount/Correct.lean)
+- [`proof/variables/VariableBound/Cert/Top.lean`](../proof/variables/VariableBound/Cert/Top.lean)
+- [`proof/variables/VariableBound/Top/ArithNeed.lean`](../proof/variables/VariableBound/Top/ArithNeed.lean)
+- [`proof/variables/VariableBound/Top/ArithPlan.lean`](../proof/variables/VariableBound/Top/ArithPlan.lean)
+- [`proof/variables/VariableBound/Top/Defs.lean`](../proof/variables/VariableBound/Top/Defs.lean)
 
 ## Additions
 

@@ -11,6 +11,8 @@ import SATNumerics
 import SATFallback
 import SharperPartitions
 import VariableBound.Params.Ineq
+import UniformInK.Top.ArithNat
+import StepSparsify.CalNumbers
 
 #print axioms ETHConstants.grid_multiplier_le
 #print axioms ETHConstants.next_level_le_fourth_power
@@ -57,5 +59,9 @@ import VariableBound.Params.Ineq
 #print axioms ETHConstants.SAT.y_tight
 #print axioms ETHConstants.SAT.e_tight
 #print axioms VariableBound.Ineq.large_nine
+#print axioms VariableBound.Ineq.large_eight
+#print axioms UniformInK.ArithNat.betaD_le_betaU
+#print axioms StepSparsify.lcCal_le_betaD
+#print axioms ETHConstants.SATNeed.betaD_three_four
 #print axioms ETHConstants.SAT.level_eight_coefficient_lt
 #print axioms ETHConstants.SAT.selected_at_target
