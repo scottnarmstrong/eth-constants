@@ -13,10 +13,10 @@ the absence of every exponential subroutine inside the recursion.
 | Piece-program constants | `(2, 95)` |
 | Padded piece constant | 190 |
 | Padded recursion overhead coefficient | `6*190+17 = 1157` |
-| Sufficient selected level | 32 |
-| Logarithm to base two of the level-32 clique size | 231,928,233,754 |
-| Exact level threshold in variables | `2^3942779973818` |
-| Rounded sufficient threshold in variables | `10^1200000000000` |
+| Sufficient selected level | 28 |
+| Logarithm to base two of the level-28 clique size | 14,495,514,418 |
+| Exact level threshold in variables | `2^246423745106` |
+| Rounded sufficient threshold in variables | `10^75000000000` |
 
 The level schedule is unchanged apart from its starting parameter. The new
 precision rule is
@@ -36,11 +36,33 @@ $$
 \le [420(24s+103)+1]e_\ell+2^{-s}\lt 1.
 $$
 
-All three plan feasibility conditions are checked as well. At level 32, `s=4`
-and the proved bound `e_l ≤ (7/10)*(1/sqrt(2))^l` gives the rational upper bound
-`626027/655360`, about 0.95525. The merged program uses an exponent no larger
-than that of the variable route. If it selects the clause route, that route’s
-plan must therefore also exist.
+For levels 28 through 31, `s=4` and `betaU 3 4=198`. Retaining the exact
+network logarithm gives
+
+$$
+\lceil\log_2(96\cdot 2^{198}\cdot199)\rceil=213,
+$$
+
+and, for `n >= 199`,
+
+$$
+U=18(n+199)+84n\cdot213+18K^{16}
+\le17928n+18K^{16}.
+$$
+
+`SATNeed.ubD_precision_four_le` proves this inequality. The generalized helper
+`SATNeed.needD_le_of_ub` propagates it to the complete budget estimate
+
+$$
+\frac{\mathrm{needD}}n\le17929e_\ell+\frac1{16}<1.
+$$
+
+At level 28, the proved recurrence estimate gives the rational upper bound
+`135743/163840`, approximately 0.82851. The earlier estimate remains in use
+from level 32 onward, where the precision eventually increases. All three
+plan feasibility conditions are checked. The merged program uses an exponent
+no larger than that of the variable route. If it selects the clause route,
+that route's plan must therefore also exist.
 
 The numerical witness 1157 is extracted from the constructive upstream proof
 by `WitnessExtraction`. The resulting proof term is checked by Lean’s kernel;
@@ -73,8 +95,8 @@ being below `n` does not show that the resulting Turing machine runs faster
 than brute force: a polynomial simulation raises the padded cost to a power,
 and that degree and its constants are not explicit here.
 
-At level 31 the present reduction estimate still exceeds `n`, even when the
-recurrence is evaluated numerically and the smallest permitted precision is
-used. Lowering the cutoff substantially further requires tighter reduction
-estimates or a different construction. This is a limitation of the current
-bound, not a lower bound on the program’s actual runtime.
+At level 27 the improved budget expression still exceeds one, even when the
+recurrence is evaluated tightly and the smallest permitted precision is used.
+See [the next targets](NEXT_STEPS.md) for a quantitative assessment, including
+the proposed threshold of `10^100000` variables. These are limitations of the
+current estimates, not lower bounds on the program’s actual runtime.

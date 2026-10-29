@@ -49,3 +49,9 @@ import SharperPartitions
 #print axioms ETHConstants.Partition.third_moment_exp_le
 #print axioms ETHConstants.Partition.partition_lower_bound
 #print axioms ETHConstants.Partition.explicit_partition_lower_bound
+
+#print axioms ETHConstants.SATNeed.needD_le_of_ub
+#print axioms ETHConstants.SATNeed.ubD_precision_four_le
+#print axioms ETHConstants.SAT.main_small_four
+#print axioms ETHConstants.SAT.level_eight_coefficient_lt
+#print axioms ETHConstants.SAT.selected_at_target

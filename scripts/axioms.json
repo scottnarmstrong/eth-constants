@@ -41,6 +41,11 @@
     "ETHConstants.SAT.algorithm_poly",
     "ETHConstants.Partition.third_moment_exp_le",
     "ETHConstants.Partition.partition_lower_bound",
-    "ETHConstants.Partition.explicit_partition_lower_bound"
+    "ETHConstants.Partition.explicit_partition_lower_bound",
+    "ETHConstants.SATNeed.needD_le_of_ub",
+    "ETHConstants.SATNeed.ubD_precision_four_le",
+    "ETHConstants.SAT.main_small_four",
+    "ETHConstants.SAT.level_eight_coefficient_lt",
+    "ETHConstants.SAT.selected_at_target"
   ]
 }

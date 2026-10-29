@@ -17,7 +17,7 @@ and how far can it be reduced without losing a checked proof?
 This fork investigates that question using Anthropic’s publicly available Lean
 development. The goal is to make the constants explicit, improve them, and
 verify the resulting finite cutoff against the actual program’s branch guards.
-The cutoff proved here has exponent $1.2\times10^{12}$, roughly 8.3 trillion
+The cutoff proved here has exponent $7.5\times10^{10}$, roughly 133 trillion
 times smaller than the exponent in the quoted number.
 
 These are different algorithms. This result does not establish that the quoted
@@ -30,7 +30,7 @@ constants can be improved in the Anthropic construction.
 For every valid 3-CNF formula on
 
 $$
-n \ge 10^{1,200,000,000,000}
+n \ge 10^{75,000,000,000}
 $$
 
 variables, the modified program **does not select its top-level exhaustive
@@ -63,15 +63,17 @@ The program is `ETHConstants.SAT.algorithm`; its exponent function is
 `ETHConstants.SAT.budget`. Both are defined in
 [`Constants/SATFallback.lean`](Constants/SATFallback.lean).
 
-The exact level used is 32, with
+The exact level used is 28, with
 
 $$
-K_{32}^{17}=2^{3,942,779,973,818}.
+K_{28}^{17}=2^{246,423,745,106}.
 $$
 
 The decimal cutoff is a certified upward rounding. All numerical comparisons
 in the Lean proofs use exact arithmetic. See [the constants and cost bounds](docs/CONSTANTS.md)
-for the derivation and the remaining bottlenecks.
+for the derivation, and [further improvement targets](docs/NEXT_STEPS.md) for the
+remaining bottlenecks. Retaining the exact network logarithm lowers the outer
+exponent by a factor of 16 relative to the first release.
 
 ## Build and verify
 

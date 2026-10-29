@@ -107,6 +107,31 @@ theorem main_small (l : ℕ) (hl : 32 ≤ l) :
     linarith only [he]
   · exact main_small_of33 l (by omega)
 
+/-- The exact network logarithm permits levels 28 through 31 at precision four. -/
+theorem main_small_four (l : ℕ) (hl : 28 ≤ l) :
+    (17929 : ℝ) * e rho 16 l + 1 / (2:ℝ)^4 < 1 := by
+  have hr : rho^l ≤ rho^28 := pow_le_pow_of_le_one
+    (by linarith [rho_ge]) rho_lt.le hl
+  have he := (e_sharp l).trans (mul_le_mul_of_nonneg_left hr (by norm_num : (0:ℝ) ≤ 7/10))
+  have hpow : rho^28 = (1/2:ℝ)^14 := by
+    calc rho^28 = (rho^2)^14 := by ring
+      _ = (1/2:ℝ)^14 := by rw [rho_sq]
+  rw [hpow] at he
+  norm_num at he ⊢
+  linarith only [he]
+
+/-- A limitation of the level-eight budget certificate, not a runtime lower bound. -/
+theorem level_eight_coefficient_lt {a : ℝ} (ha : 0 ≤ a)
+    (h : a * e rho 16 8 + 1 / (2:ℝ)^4 < 1) : a < 30 := by
+  have he := (partA.e_bounds 8).1
+  have hp : rho^8 = (1/2:ℝ)^4 := by
+    calc rho^8 = (rho^2)^4 := by ring
+      _ = (1/2:ℝ)^4 := by rw [rho_sq]
+  rw [hp] at he
+  norm_num at he h
+  have hm := mul_le_mul_of_nonneg_left he ha
+  nlinarith only [hm, h]
+
 /-- A deliberately simple integer envelope for all lower order terms. -/
 theorem linear_le_x (l : ℕ) (hl : 10 ≤ l) : 200*(l+1) ≤ x 16 l := by
   have h : 200*(l+1) ≤ 16*2^l := by
@@ -130,7 +155,7 @@ theorem size_K_le (l : ℕ) : (K 16 l).size ≤ 2^(l+6) := by
     exact_mod_cast this
   simpa [pow_add, Nat.mul_comm] using hx
 
-theorem W_small_nat (l : ℕ) (hl : 32 ≤ l) :
+theorem W_small_nat (l : ℕ) (hl : 28 ≤ l) :
     ccD 3 1157 * WofU (betaU 3 (precision l)) (K 16 l) * 2^(l+1) ≤ K 16 l := by
   have hc : ccD 3 1157 ≤ 2^27 := by norm_num [ccD, GD]
   have hb := beta_le l
@@ -155,7 +180,7 @@ theorem W_small_nat (l : ℕ) (hl : 32 ≤ l) :
       (by have := linear_le_x l (by omega); omega)
     _ = K 16 l := (K_eq 16 l).symm
 
-theorem W_small (l : ℕ) (hl : 32 ≤ l) :
+theorem W_small (l : ℕ) (hl : 28 ≤ l) :
     (WofU (betaU 3 (precision l)) (K 16 l) : ℝ) ≤
       (1 / (ccD 3 1157:ℝ)) * (K 16 l) * e rho 16 l := by
   have h := W_small_nat l hl
@@ -174,7 +199,7 @@ theorem W_small (l : ℕ) (hl : 32 ≤ l) :
     (le_div_iff₀ hc).2 (by simpa only [mul_comm] using hh)
   convert hh' using 1; ring
 
-theorem delta_six_le_K (l : ℕ) (hl : 32 ≤ l) :
+theorem delta_six_le_K (l : ℕ) (hl : 28 ≤ l) :
     (2^betaU 3 (precision l))^6 ≤ K 16 l := by
   rw [← pow_mul, K_eq]
   apply Nat.pow_le_pow_right (by norm_num)

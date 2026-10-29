@@ -17,23 +17,22 @@ open Groundwork PaddedDescent PaddedDescent.F CountKSatRate ClauseBound.Alg
 open ClauseBound.Alg.TopArith ClauseBound.TopN ClauseBound.TopN.Arith
 open ClauseBound.ParityChecks ClauseBound.ParityChecks.ArithOL UniformInK
 open VariableBound VariableBound.Net VariableBound.ArithNeed
-theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx : Type} [Enc Idx] (S : Solver Idx) (i : Idx) {e : ℝ} {C₀ k n s : ℕ} {A₁ : ℝ}
+/-- Preserve a separately proved leading coefficient for the network cost. -/
+theorem needD_le_of_ub (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx : Type} [Enc Idx] (S : Solver Idx) (i : Idx) {e : ℝ} {C₀ k n s a : ℕ} {A₁ : ℝ}
+    (hUb : UbD k (S.K i) n (2 ^ betaU k s) ≤ a * n + 18 * S.K i ^ 16)
     (hk : 1 ≤ k) (hK : 2 ≤ S.K i) (hn17 : S.K i ^ 17 ≤ n)
     (hlt : n < S.K i ^ (17 * C₀)) (hD : 2 ^ betaU k s ≤ n + 1) (he0 : 0 < e) (he1 : e ≤ 1)
     (hM : ((WofU (betaU k s) (S.K i) : ℕ) : ℝ) ≤ (A₁ : ℝ) * (S.K i) * e)
     (hrate : ∀ lam B : ℕ, 1 ≤ lam → 1 ≤ B → (S.need (i, List.replicate lam (), List.replicate B ()) : ℝ) ≤
       e * (S.K i : ℝ) ^ 2 * lam + C₀ * (S.K i : ℝ) ^ 2 * Real.logb 2 (S.K i * (lam + B))) :
-    (needD S k i n s : ℝ) ≤ (140 * k * ((betaU k s + 1 : ℕ) : ℝ) + (ccD k C₀ : ℝ) * A₁) * n * e + n / (2:ℝ)^s := by
+    (needD S k i n s : ℝ) ≤ ((a : ℝ) + (ccD k C₀ : ℝ) * A₁) * n * e + n / (2:ℝ)^s := by
   obtain ⟨hkβ, hbD, hlin⟩ := hB k s hk
   have hβ1 : 1 ≤ betaU k s := hk.trans hkβ
   have hK1 : 1 ≤ S.K i := by omega
-  have hKn : S.K i ≤ n := by simpa using pow_le_n hK1 hn17 (j := 1) (by norm_num)
-  have hn1 : 1 ≤ n := hK1.trans hKn
   obtain ⟨r1, r2, r3, r4, r5, r6, r7, r8, r9⟩ := lowerDR hL (k := k) (s := s) (C₀ := C₀) hβ1 hkβ hK hn17 hlt
   have harg := hA (betaU k s) k (S.K i) n C₀ hkβ hbD hK hn17 hlt hD
   have hlam1 := one_le_lamS hK1 (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))
   have hlamK := lamS_mul_le (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s))
-  have hUb := hU (betaU k s) k (S.K i) n hβ1 hn1
   have hB1 : 1 ≤ bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n) := by
     have b1 : 1 ≤ BbD k n := by unfold BbD BD; omega
     have b2 : 1 ≤ 2 * (3 * S.K i ^ 8) / S.K i := by
@@ -52,7 +51,7 @@ theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU)
     List.replicate (bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n)) ()) = nd at hr hsum
   generalize bitsS (S.K i) (3 * S.K i ^ 8) (PbD (S.K i) n (2 ^ betaU k s)) (BbD k n) = Bt at hr hlog
   generalize lamS (S.K i) (3 * S.K i ^ 8) (UbD k (S.K i) n (2 ^ betaU k s)) (PbD (S.K i) n (2 ^ betaU k s)) = lam at hr hlog hsum r3 hlamK
-  have rU : ((UbD k (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) ≤ 140 * (k : ℝ) * n * ((betaU k s + 1 : ℕ) : ℝ) + ((18 * S.K i ^ 16 : ℕ) : ℝ) := by exact_mod_cast hUb
+  have rU : ((UbD k (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) ≤ (a : ℝ) * n + ((18 * S.K i ^ 16 : ℕ) : ℝ) := by exact_mod_cast hUb
   have rL : (lam : ℝ) * (S.K i : ℝ) ^ 3 ≤ (S.K i : ℝ) ^ 3 + (S.K i : ℝ) * ((UbD k (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) +
       ((3 * S.K i ^ 8 * PbD (S.K i) n (2 ^ betaU k s) : ℕ) : ℝ) := by
     exact_mod_cast hlamK
@@ -72,8 +71,34 @@ theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU)
     unfold ccD; push_cast; ring
   rw [ecc] at core
   calc
-    (needD S k i n s : ℝ) ≤ e * (140 * k * n * ((betaU k s + 1 : ℕ) : ℝ)) +
+    (needD S k i n s : ℝ) ≤ e * ((a : ℝ) * n) +
         ((ccD k C₀ : ℝ) * A₁) * (n * e) + n / (2:ℝ)^s := by linarith
-    _ = (140 * k * ((betaU k s + 1 : ℕ) : ℝ) + (ccD k C₀ : ℝ) * A₁) * n * e + n / (2:ℝ)^s := by ring
+    _ = ((a : ℝ) + (ccD k C₀ : ℝ) * A₁) * n * e + n / (2:ℝ)^s := by ring
+
+theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU) {Idx : Type} [Enc Idx] (S : Solver Idx) (i : Idx) {e : ℝ} {C₀ k n s : ℕ} {A₁ : ℝ}
+    (hk : 1 ≤ k) (hK : 2 ≤ S.K i) (hn17 : S.K i ^ 17 ≤ n)
+    (hlt : n < S.K i ^ (17 * C₀)) (hD : 2 ^ betaU k s ≤ n + 1) (he0 : 0 < e) (he1 : e ≤ 1)
+    (hM : ((WofU (betaU k s) (S.K i) : ℕ) : ℝ) ≤ (A₁ : ℝ) * (S.K i) * e)
+    (hrate : ∀ lam B : ℕ, 1 ≤ lam → 1 ≤ B → (S.need (i, List.replicate lam (), List.replicate B ()) : ℝ) ≤
+      e * (S.K i : ℝ) ^ 2 * lam + C₀ * (S.K i : ℝ) ^ 2 * Real.logb 2 (S.K i * (lam + B))) :
+    (needD S k i n s : ℝ) ≤ (140 * k * ((betaU k s + 1 : ℕ) : ℝ) + (ccD k C₀ : ℝ) * A₁) * n * e + n / (2:ℝ)^s := by
+  have hK1 : 1 ≤ S.K i := by omega
+  have hKn : S.K i ≤ n := by simpa using pow_le_n hK1 hn17 (j := 1) (by norm_num)
+  have hU' := hU (betaU k s) k (S.K i) n (hk.trans (hB k s hk).1) (hK1.trans hKn)
+  have h := needD_le_of_ub hA hL hB S i
+    (a := 140 * k * (betaU k s + 1)) (by nlinarith only [hU'])
+    hk hK hn17 hlt hD he0 he1 hM hrate
+  push_cast at h
+  simpa only [Nat.cast_add, Nat.cast_one] using h
+
+/-- Evaluate the logarithm at precision four instead of using the uniform coefficient 140. -/
+theorem ubD_precision_four_le (K n : ℕ) (hn : 199 ≤ n) :
+    UbD 3 K n (2 ^ betaU 3 4) ≤ 17928 * n + 18 * K ^ 16 := by
+  have hc : Nat.clog 2 (96 * 2 ^ 198 * 199) = 213 := by decide
+  change UbD 3 K n (2 ^ 198) ≤ 17928 * n + 18 * K ^ 16
+  unfold UbD
+  rw [LD_two_pow]
+  rw [show 198 + 1 = 199 from rfl, hc]
+  nlinarith only [hn]
 
 end ETHConstants.SATNeed
