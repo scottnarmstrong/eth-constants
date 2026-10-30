@@ -10,6 +10,7 @@ import SATNeed
 import SATNumerics
 import SATFallback
 import SharperPartitions
+import VariableBound.Field.Amplify
 import VariableBound.Params.Ineq
 import UniformInK.Top.ArithNat
 import StepSparsify.CalNumbers
@@ -64,3 +65,8 @@ import StepSparsify.CalNumbers
 #print axioms ETHConstants.SATNeed.betaD_three_four
 #print axioms ETHConstants.SAT.level_eight_coefficient_lt
 #print axioms ETHConstants.SAT.selected_at_target
+
+#print axioms VariableBound.Amplify.odd_triple
+#print axioms VariableBound.Amplify.triple_bounds
+#print axioms VariableBound.Fld.famAmpD_isFamily
+#print axioms VariableBound.Fld.famAmpD_poly

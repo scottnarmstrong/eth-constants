@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -40,7 +41,7 @@ open Groundwork Groundwork.Prog PaddedDescent PaddedDescent.F PaddedDescent.F.Ma
 /-! ### Constants -/
 
 /-- The constant in g·P ≤ G·W·n. -/
-def GD (C₀ : ℕ) : ℕ := 107012 + 68 * C₀
+def GD (C₀ : ℕ) : ℕ := 319492 + 68 * C₀
 
 /-- The sum of the constants of the parts of lower order. -/
 def ccD (k C₀ : ℕ) : ℕ := 3 + 3 * GD C₀ + (19 + 140 * k + GD C₀) + GD C₀ + 18 + 1 + C₀ * (85 * C₀ + 16) + 18 * (4 + 17 * C₀) + (10 + 34 * C₀)

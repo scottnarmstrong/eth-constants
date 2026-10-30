@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -24,12 +26,12 @@ Proves `AppVariables.StepChoice`, for an abstract family Γ_u, u ∈ Ω, with th
 of Lemma 13 (`AppVariables.IsFamily`). The argument is the one of the text:
 
 * appending Γ_u multiplies the term of ξ in X(𝓛) by [ |Γ_u ∩ V(ξ)| even ]; a nonzero term has |V(ξ)| >
-  n̄, so by (c) the average of X(𝓛, Γ_u) is at most (3/4)·X(𝓛) (`avgX`);
+  n̄, so by (c) the average of X(𝓛, Γ_u) is at most (9/16)·X(𝓛) (`avgX`);
 * by (b) the average of 2^[E ∈ Γ_u] is at most 1 + p (`avgCol`);
 * so, for a list of fewer than r̄ checks, the average of Υ(𝓛, Γ_u) is at most Υ(𝓛) (`avgUps`), and
   so is the minimum (`minUps`);
 * for the empty list both terms of Υ are at most 1 (`ups_nil`);
-* Υ(𝓛) ≤ 2 gives X(𝓛) ≤ (3/4)^r·2^β (`x_of_ups`) and load(E) ≤ t̄ + 1 (`load_of_ups`); a list with
+* Υ(𝓛) ≤ 2 gives X(𝓛) ≤ (9/16)^r·2^β (`x_of_ups`) and load(E) ≤ t̄ + 1 (`load_of_ups`); a list with
   X(𝓛) > 0 and this bound has fewer than r̄ checks (`lt_rb`);
 * hence, by induction along the algorithm, every reached list has at most r̄ checks and Υ ≤ 2
   (`reached`); if Ω is not empty, the algorithm can go on while X(𝓛) > 0 (`progress`).
@@ -88,9 +90,9 @@ theorem Xsum_nil_le (V : X → Finset E) (nb n : ℕ) (hX : Fintype.card X ≤ 2
 /-! ### The two averages -/
 
 /-- For a family as in Lemma 13 with v = n̄, by its part (c): for a set W of more than n̄ clauses, [ |Γ_u
-∩ W| even ] is 1 for at most three quarters of the u ∈ Ω. -/
+∩ W| even ] is 1 for at most nine sixteenths of the u ∈ Ω. -/
 theorem sum_ev_le {nb : ℕ} {Ω : Finset ι} {Γ : ι → Finset E} (hF : IsFamily nb Ω Γ) (W : Finset E) (hW : nb < #W) :
-    4 * ∑ u ∈ Ω, ParityChecks.ev #(Γ u ∩ W) ≤ 3 * (#Ω : ℤ) := by
+    16 * ∑ u ∈ Ω, ParityChecks.ev #(Γ u ∩ W) ≤ 9 * (#Ω : ℤ) := by
   have h1 : ∑ u ∈ Ω, ParityChecks.ev #(Γ u ∩ W) = (#{u ∈ Ω | Even #(Γ u ∩ W)} : ℤ) := by
     unfold ParityChecks.ev; rw [sum_boole]
   have h2 : #{u ∈ Ω | Even #(Γ u ∩ W)} + #{u ∈ Ω | Odd #(Γ u ∩ W)} = #Ω := by
@@ -98,26 +100,26 @@ theorem sum_ev_le {nb : ℕ} {Ω : Finset ι} {Γ : ι → Finset E} (hF : IsFam
     exact card_filter_add_card_filter_not _
   have h3 := hF.c W hW
   rw [h1]
-  have : 4 * #{u ∈ Ω | Even #(Γ u ∩ W)} ≤ 3 * #Ω := by omega
+  have : 16 * #{u ∈ Ω | Even #(Γ u ∩ W)} ≤ 9 * #Ω := by omega
   exact_mod_cast this
 
-/-- Step 2, «the average of X(𝓛, Γ_u) over u ∈ Ω is at most (3/4)·X(𝓛)», for a family as in Lemma 13
+/-- Step 2, «the average of X(𝓛, Γ_u) over u ∈ Ω is at most (9/16)·X(𝓛)», for a family as in Lemma 13
 with v = n̄. -/
 theorem avgX (V : X → Finset E) (nb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)) (hF : IsFamily nb Ω Γ) :
-    4 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u]) ≤ 3 * #Ω * Xsum V nb L := by
-  calc 4 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u])
-      = ∑ ξ, ((#(V ξ)).choose (nb + 1) : ℤ) * allEven V L ξ * (4 * ∑ u ∈ Ω, ParityChecks.ev #(Γ u ∩ V ξ)) := by
+    16 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u]) ≤ 9 * #Ω * Xsum V nb L := by
+  calc 16 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u])
+      = ∑ ξ, ((#(V ξ)).choose (nb + 1) : ℤ) * allEven V L ξ * (16 * ∑ u ∈ Ω, ParityChecks.ev #(Γ u ∩ V ξ)) := by
         simp only [Xsum, allEven_append]
         rw [sum_comm, mul_sum]
         refine sum_congr rfl fun ξ _ => ?_
         rw [mul_sum, mul_sum, mul_sum]
         exact sum_congr rfl fun u _ => by ring
-    _ ≤ ∑ ξ, ((#(V ξ)).choose (nb + 1) : ℤ) * allEven V L ξ * (3 * (#Ω : ℤ)) := by
+    _ ≤ ∑ ξ, ((#(V ξ)).choose (nb + 1) : ℤ) * allEven V L ξ * (9 * (#Ω : ℤ)) := by
         refine sum_le_sum fun ξ _ => ?_
         by_cases h : nb < #(V ξ)
         · exact mul_le_mul_of_nonneg_left (sum_ev_le hF _ h) (mul_nonneg (by positivity) (allEven_nonneg V L ξ))
         · rw [Nat.choose_eq_zero_of_lt (by omega)]; simp
-    _ = 3 * #Ω * Xsum V nb L := by
+    _ = 9 * #Ω * Xsum V nb L := by
         rw [Xsum, mul_sum]
         exact sum_congr rfl fun ξ _ => by ring
 
@@ -131,7 +133,7 @@ theorem avgCol (nb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (e : E) (hnb :
     rw [← sum_boole, card_eq_sum_ones, Nat.cast_sum, ← sum_add_distrib]
     refine sum_congr rfl fun u _ => ?_
     split <;> norm_num
-  have h2 : (15 : ℚ) * nb * #{u ∈ Ω | e ∈ Γ u} ≤ 16 * #Ω := by exact_mod_cast hF.b e
+  have h2 : (15 : ℚ) * nb * #{u ∈ Ω | e ∈ Γ u} ≤ 48 * #Ω := by exact_mod_cast hF.b e
   have h3 : (0 : ℚ) < 15 * nb := by
     have : (0 : ℚ) < nb := by exact_mod_cast hnb
     positivity
@@ -154,7 +156,7 @@ theorem load_append (L : List (Finset E)) (Γ : Finset E) (e : E) : load (L ++ [
 family as in Lemma 13 with v = n̄ ≥ 1. -/
 theorem avgUps (V : X → Finset E) (nb β rb tb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)) (hnb : 1 ≤ nb) (hF : IsFamily nb Ω Γ)
     (hr : L.length < rb) : ∑ u ∈ Ω, Ups V nb β rb tb (L ++ [Γ u]) ≤ #Ω * Ups V nb β rb tb L := by
-  have h1 : (4 : ℚ) * ∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ) ≤ 3 * #Ω * (Xsum V nb L : ℚ) := by exact_mod_cast avgX V nb Ω Γ L hF
+  have h1 : (16 : ℚ) * ∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ) ≤ 9 * #Ω * (Xsum V nb L : ℚ) := by exact_mod_cast avgX V nb Ω Γ L hF
   have h2 : ∀ e, ∑ u ∈ Ω, (2 : ℚ) ^ load (L ++ [Γ u]) e ≤ 2 ^ load L e * ((1 + pp nb) * #Ω) := by
     intro e
     simp only [load_append, pow_add]
@@ -167,10 +169,10 @@ theorem avgUps (V : X → Finset E) (nb β rb tb : ℕ) (Ω : Finset ι) (Γ : �
   simp only [List.length_append, List.length_singleton, hd, hd']
   rw [sum_add_distrib, ← sum_div, ← mul_sum, ← mul_sum, sum_comm, mul_add]
   refine add_le_add ?_ ?_
-  · calc (4 / 3 : ℚ) ^ (L.length + 1) * (∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ)) / 2 ^ (β - 1)
-        = (4 / 3 : ℚ) ^ L.length / 2 ^ (β - 1) * (4 * ∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ)) / 3 := by ring
-      _ ≤ (4 / 3 : ℚ) ^ L.length / 2 ^ (β - 1) * (3 * #Ω * (Xsum V nb L : ℚ)) / 3 := by gcongr
-      _ = #Ω * ((4 / 3 : ℚ) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1)) := by ring
+  · calc (16 / 9 : ℚ) ^ (L.length + 1) * (∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ)) / 2 ^ (β - 1)
+        = (16 / 9 : ℚ) ^ L.length / 2 ^ (β - 1) * (16 * ∑ u ∈ Ω, (Xsum V nb (L ++ [Γ u]) : ℚ)) / 9 := by ring
+      _ ≤ (16 / 9 : ℚ) ^ L.length / 2 ^ (β - 1) * (9 * #Ω * (Xsum V nb L : ℚ)) / 9 := by gcongr
+      _ = #Ω * ((16 / 9 : ℚ) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1)) := by ring
   · calc (1 + pp nb) ^ d * (1 / 2 ^ tb) * ∑ e : E, ∑ u ∈ Ω, (2 : ℚ) ^ load (L ++ [Γ u]) e
         ≤ (1 + pp nb) ^ d * (1 / 2 ^ tb) * ∑ e : E, (2 : ℚ) ^ load L e * ((1 + pp nb) * #Ω) := by
           gcongr with e _
@@ -190,7 +192,7 @@ theorem minUps (V : X → Finset E) (nb β rb tb : ℕ) (Ω : Finset ι) (Γ : �
 
 omit [Fintype E] in
 /-- The first term of Υ is not negative. -/
-theorem first_nonneg (V : X → Finset E) (nb β : ℕ) (L : List (Finset E)) : (0 : ℚ) ≤ (4 / 3) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) := by
+theorem first_nonneg (V : X → Finset E) (nb β : ℕ) (L : List (Finset E)) : (0 : ℚ) ≤ (16 / 9) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) := by
   have : (0 : ℚ) ≤ (Xsum V nb L : ℚ) := by exact_mod_cast Xsum_nonneg V nb L
   positivity
 
@@ -212,7 +214,7 @@ theorem ups_nil (V : X → Finset E) (n nb rb tb : ℕ) (hX : Fintype.card X ≤
     exact_mod_cast Nat.le_pow_clog (by norm_num) _
   have h1' : (Xsum V nb [] : ℚ) ≤ 2 ^ (beta n (Fintype.card E) nb - 1) := by exact_mod_cast h1
   unfold Ups
-  have e1 : (4 / 3 : ℚ) ^ ([] : List (Finset E)).length * (Xsum V nb [] : ℚ) / 2 ^ (beta n (Fintype.card E) nb - 1) ≤ 1 := by
+  have e1 : (16 / 9 : ℚ) ^ ([] : List (Finset E)).length * (Xsum V nb [] : ℚ) / 2 ^ (beta n (Fintype.card E) nb - 1) ≤ 1 := by
     rw [List.length_nil, pow_zero, one_mul, div_le_one (by positivity)]
     exact h1'
   have e2 : (1 + pp nb) ^ (rb - ([] : List (Finset E)).length) * (1 / 2 ^ tb) * ∑ e : E, (2 : ℚ) ^ load [] e ≤ 1 := by
@@ -222,32 +224,32 @@ theorem ups_nil (V : X → Finset E) (n nb rb tb : ℕ) (hX : Fintype.card X ≤
       _ ≤ 1 := by rw [div_le_one (by positivity)]; exact ht
   linarith
 
-/-- Step 2, «hence X(𝓛) ≤ (3/4)^r·2^β»: from Υ(𝓛) ≤ 2 and β ≥ 1. -/
+/-- Step 2, «hence X(𝓛) ≤ (9/16)^r·2^β»: from Υ(𝓛) ≤ 2 and β ≥ 1. -/
 theorem x_of_ups (V : X → Finset E) (nb β rb tb : ℕ) (L : List (Finset E)) (hβ : 1 ≤ β) (h : Ups V nb β rb tb L ≤ 2) :
-    4 ^ L.length * Xsum V nb L ≤ 3 ^ L.length * 2 ^ β := by
-  have h1 : (4 / 3 : ℚ) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) ≤ 2 := by
+    16 ^ L.length * Xsum V nb L ≤ 9 ^ L.length * 2 ^ β := by
+  have h1 : (16 / 9 : ℚ) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) ≤ 2 := by
     have := second_nonneg nb rb tb L
     unfold Ups at h
     linarith
   have h2 : (2 : ℚ) ^ β = 2 * 2 ^ (β - 1) := by
     obtain ⟨b, rfl⟩ : ∃ b, β = b + 1 := ⟨β - 1, by omega⟩
     rw [Nat.add_sub_cancel, pow_succ]; ring
-  have h3 : (4 : ℚ) ^ L.length * (Xsum V nb L : ℚ) ≤ 3 ^ L.length * 2 ^ β := by
+  have h3 : (16 : ℚ) ^ L.length * (Xsum V nb L : ℚ) ≤ 9 ^ L.length * 2 ^ β := by
     rw [div_le_iff₀ (by positivity), div_pow, div_mul_eq_mul_div, div_le_iff₀ (by positivity)] at h1
     rw [h2]; linarith
   exact_mod_cast h3
 
 omit [Fintype E] in
-/-- A list with X(𝓛) > 0, at most r̄ checks and X(𝓛) ≤ (3/4)^r·2^β has fewer than r̄ checks, because
-3^r̄·2^β < 4^r̄. -/
-theorem lt_rb (V : X → Finset E) (nb β rb : ℕ) (L : List (Finset E)) (hrb : 3 ^ rb * 2 ^ β < 4 ^ rb) (hl : L.length ≤ rb) (hpos : 0 < Xsum V nb L)
-    (h : 4 ^ L.length * Xsum V nb L ≤ 3 ^ L.length * 2 ^ β) : L.length < rb := by
+/-- A list with X(𝓛) > 0, at most r̄ checks and X(𝓛) ≤ (9/16)^r·2^β has fewer than r̄ checks, because
+9^r̄·2^β < 16^r̄. -/
+theorem lt_rb (V : X → Finset E) (nb β rb : ℕ) (L : List (Finset E)) (hrb : 9 ^ rb * 2 ^ β < 16 ^ rb) (hl : L.length ≤ rb) (hpos : 0 < Xsum V nb L)
+    (h : 16 ^ L.length * Xsum V nb L ≤ 9 ^ L.length * 2 ^ β) : L.length < rb := by
   rcases hl.lt_or_eq with h' | h'
   · exact h'
   · exfalso
     rw [h'] at h
-    have h1 : (3 : ℤ) ^ rb * 2 ^ β < 4 ^ rb := by exact_mod_cast hrb
-    have h2 : (4 : ℤ) ^ rb * 1 ≤ 4 ^ rb * Xsum V nb L := mul_le_mul_of_nonneg_left (by omega) (by positivity)
+    have h1 : (9 : ℤ) ^ rb * 2 ^ β < 16 ^ rb := by exact_mod_cast hrb
+    have h2 : (16 : ℤ) ^ rb * 1 ≤ 16 ^ rb * Xsum V nb L := mul_le_mul_of_nonneg_left (by omega) (by positivity)
     linarith
 
 /-- Step 2, «also 2^(load(E)−t̄) ≤ 2 for every clause E»: from Υ(𝓛) ≤ 2, load(E) ≤ t̄ + 1. -/
@@ -306,7 +308,7 @@ namespace VariableBound
 open AppVariables Finset
 
 /-- Step 2 of Appendix D (finding the checks): the averages of X, 2^[E ∈ Γ_u] and Υ, r ≤ r̄ and Υ ≤
-2 on reached lists, X(𝓛) ≤ (3/4)^r·2^β, the loop's progress and end, and the bounds on r, |Λ_j|,
+2 on reached lists, X(𝓛) ≤ (9/16)^r·2^β, the loop's progress and end, and the bounds on r, |Λ_j|,
 load(E). -/
 theorem stepChoice : AppVariables.StepChoice where
   avgX := fun _ _ _ _ _ _ V nb Ω Γ L hF => StepChoice.avgX V nb Ω Γ L hF
@@ -328,7 +330,7 @@ theorem stepChoice : AppVariables.StepChoice where
     have h := StepChoice.reached V n nb rb tb Ω Γ L hX hnb hrb htb hF hL
     have hm := StepChoice.reached_mem V nb _ rb tb Ω Γ L hL
     have hc := StepChoice.load_of_ups V nb _ rb tb L h.2
-    have ha : ∀ Λ ∈ L, nb * #Λ ≤ 16 * Fintype.card E := by
+    have ha : ∀ Λ ∈ L, nb * #Λ ≤ 48 * Fintype.card E := by
       intro Λ hΛ
       obtain ⟨u, hu, rfl⟩ := hm Λ hΛ
       exact hF.a u hu

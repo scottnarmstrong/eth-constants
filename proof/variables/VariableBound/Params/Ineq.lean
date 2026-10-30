@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -20,7 +21,7 @@ and the bound log C(t, μ) ≤ μ'·max{1, log(3t/μ')} of the paragraph, which 
 proof/rates/ClauseBound/ParityChecks/Binom.lean, follow the bounds on s̄, on 3m/(n̄+1) and on β.
 In the docstrings n̄ stands for any number with `IsNb n Δ n̄`; where a statement needs the r̄ or t̄
 defined in the paper (`IsRb`, `IsTb`) rather than an arbitrary number, its docstring says so.
-The bound r̄ ≤ 2.41·β + 1 comes from (4/3)^241 > 2^100 and the minimality of r̄. The bounds r̄ ≤ 10n
+The bound r̄ ≤ 1.21·β + 1 comes from (16/9)^121 > 2^100 and the minimality of r̄. The bounds r̄ ≤ 10n
 and M ≤ 14n are proved for n ≥ 29·L + 19. The bound on t̄ uses log(1+p) ≤ (3/2)·p and the minimality
 of t̄. -/
 
@@ -125,23 +126,23 @@ theorem beta_le₂ {n Δ nb : ℕ} (hΔ : 1 ≤ Δ) (h : IsNb n Δ nb) : (n : �
   have h1 := nb_mul_le hΔ h
   linarith
 
-/-- r̄ ≤ 2.41·β + 1 for the r̄ of the text (`IsRb β r̄`), because 2.41·log(4/3) > 1. -/
-theorem rb_le {β rb : ℕ} (h : IsRb β rb) : (rb : ℝ) ≤ 2.41 * β + 1 := by
+/-- r̄ ≤ 1.21·β + 1 for the r̄ of the text (`IsRb β r̄`), because 1.21·log(16/9) > 1. -/
+theorem rb_le {β rb : ℕ} (h : IsRb β rb) : (rb : ℝ) ≤ 1.21 * β + 1 := by
   rcases Nat.eq_zero_or_pos rb with rfl | hpos
   · have : (0 : ℝ) ≤ β := Nat.cast_nonneg β
     push_cast
     linarith
   · obtain ⟨j, rfl⟩ : ∃ j, rb = j + 1 := ⟨rb - 1, by omega⟩
-    have h1 : 4 ^ j ≤ 3 ^ j * 2 ^ β := not_lt.1 (h.2 j (Nat.lt_succ_self j))
-    have h2 : (2 : ℕ) ^ 100 * 3 ^ 241 ≤ 4 ^ 241 := by norm_num
-    have h3 : 2 ^ (100 * j) * 3 ^ (241 * j) ≤ 2 ^ (241 * β) * 3 ^ (241 * j) := by
-      calc 2 ^ (100 * j) * 3 ^ (241 * j) = (2 ^ 100 * 3 ^ 241) ^ j := by rw [mul_pow, ← pow_mul, ← pow_mul]
-        _ ≤ (4 ^ 241) ^ j := Nat.pow_le_pow_left h2 j
-        _ = (4 ^ j) ^ 241 := by rw [← pow_mul, ← pow_mul, mul_comm]
-        _ ≤ (3 ^ j * 2 ^ β) ^ 241 := Nat.pow_le_pow_left h1 241
-        _ = 2 ^ (241 * β) * 3 ^ (241 * j) := by rw [mul_pow, ← pow_mul, ← pow_mul, mul_comm, mul_comm β, mul_comm j]
-    have h4 : 100 * j ≤ 241 * β := (Nat.pow_le_pow_iff_right (by norm_num)).1 (Nat.le_of_mul_le_mul_right h3 (by positivity))
-    have h5 : (100 : ℝ) * j ≤ 241 * β := by exact_mod_cast h4
+    have h1 : 16 ^ j ≤ 9 ^ j * 2 ^ β := not_lt.1 (h.2 j (Nat.lt_succ_self j))
+    have h2 : (2 : ℕ) ^ 100 * 9 ^ 121 ≤ 16 ^ 121 := by norm_num
+    have h3 : 2 ^ (100 * j) * 9 ^ (121 * j) ≤ 2 ^ (121 * β) * 9 ^ (121 * j) := by
+      calc 2 ^ (100 * j) * 9 ^ (121 * j) = (2 ^ 100 * 9 ^ 121) ^ j := by rw [mul_pow, ← pow_mul, ← pow_mul]
+        _ ≤ (16 ^ 121) ^ j := Nat.pow_le_pow_left h2 j
+        _ = (16 ^ j) ^ 121 := by rw [← pow_mul, ← pow_mul, mul_comm]
+        _ ≤ (9 ^ j * 2 ^ β) ^ 121 := Nat.pow_le_pow_left h1 121
+        _ = 2 ^ (121 * β) * 9 ^ (121 * j) := by rw [mul_pow, ← pow_mul, ← pow_mul, mul_comm, mul_comm β, mul_comm j]
+    have h4 : 100 * j ≤ 121 * β := (Nat.pow_le_pow_iff_right (by norm_num)).1 (Nat.le_of_mul_le_mul_right h3 (by positivity))
+    have h5 : (100 : ℝ) * j ≤ 121 * β := by exact_mod_cast h4
     push_cast
     linarith
 
@@ -237,10 +238,10 @@ theorem m_div_lt' {n Δ Δ' m nb : ℕ} (hΔ : 1 ≤ Δ) (hm : m ≤ Δ * n) (h 
   rw [div_lt_iff₀ (by linarith)]
   nlinarith
 
-/-- 16m/n̄ < 32Δ·log(2·scaleD Δ) and 3m/(n̄+1) < 6Δ·log(2·scaleD Δ), for 2 ≤ Δ, m ≤ Δ·n and n̄
+/-- 48m/n̄ < 96Δ·log(2·scaleD Δ) and 3m/(n̄+1) < 6Δ·log(2·scaleD Δ), for 2 ≤ Δ, m ≤ Δ·n and n̄
 chosen for `scaleD Δ`. -/
 theorem sb_lt2 {n Δ m nb : ℕ} (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (h : IsNb n (scaleD Δ) nb) :
-    16 * (m : ℝ) / nb < 32 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ) := by
+    48 * (m : ℝ) / nb < 96 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ) := by
   have hnb := nb_pos h
   have h1 := m_div_lt' (by omega) hm h
   have h2 : (m : ℝ) / (nb + 1) ≤ m / nb := div_le_div_of_nonneg_left (Nat.cast_nonneg m) (by linarith) (by linarith)
@@ -277,11 +278,11 @@ theorem beta_le_scaled {n Δ m nb : ℕ} {c : ℝ} (hc : 1 ≤ c) (hΔ2 : 2 ≤ 
   push_cast
   nlinarith
 
-/-- r̄ ≤ 10n, M ≤ 14n, 2M ≤ 9n, and 2M ≤ 7n if Δ ≥ 2^11, for 2 ≤ Δ, n̄ < m ≤ Δ·n, n̄ chosen for
+/-- r̄ ≤ 10n, M ≤ 14n, 2M ≤ 6n, and 2M ≤ 5n if Δ ≥ 2^11, for 2 ≤ Δ, n̄ < m ≤ Δ·n, n̄ chosen for
 `scaleD Δ`, the r̄ of the text and n ≥ 256·log(2Δ) + 19. -/
 theorem large_half {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (h : IsNb n (scaleD Δ) nb) (hr : IsRb (beta n m nb) rb)
     (hn : 256 * lg (2 * Δ) + 19 ≤ n) :
-    rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 9 * n ∧ (2 ^ 11 ≤ Δ → 2 * Mb (beta n m nb) rb ≤ 7 * n) := by
+    rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 6 * n ∧ (2 ^ 11 ≤ Δ → 2 * Mb (beta n m nb) rb ≤ 5 * n) := by
   have hL := two_le_lg hΔ
   have h1 := beta_le_scaled (c := 6) (by norm_num) hΔ hnm hm h (lg_six_le hΔ)
   have h2 := rb_le hr
@@ -297,7 +298,7 @@ theorem large_half {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m 
       push_cast
       linarith
     exact_mod_cast this
-  · have : ((2 * Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((9 * n : ℕ) : ℝ) := by
+  · have : ((2 * Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((6 * n : ℕ) : ℝ) := by
       unfold Mb
       push_cast
       rw [Nat.cast_sub (by omega)]
@@ -317,7 +318,7 @@ theorem large_half {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m 
       rw [lg_six_eq hΔ]
       linarith [lg_384_le' hL12]
     have h1' := beta_le_scaled (c := 21 / 10) (by norm_num) hΔ hnm hm h hlog
-    have : ((2 * Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((7 * n : ℕ) : ℝ) := by
+    have : ((2 * Mb (beta n m nb) rb : ℕ) : ℝ) ≤ ((5 * n : ℕ) : ℝ) := by
       unfold Mb
       push_cast
       rw [Nat.cast_sub (by omega)]
@@ -325,8 +326,8 @@ theorem large_half {n Δ m nb rb : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m 
       linarith
     exact_mod_cast this
 
-/-- p·r̄ < 22·log(2Δ), for 2 ≤ Δ and any number r̄ ≤ 10n. -/
-theorem p_rb {n Δ nb rb : ℕ} (hΔ : 2 ≤ Δ) (h : IsNb n Δ nb) (hr : rb ≤ 10 * n) : ((pp nb : ℚ) : ℝ) * rb < 22 * lg (2 * Δ) := by
+/-- p·r̄ < 64·log(2Δ), for 2 ≤ Δ and any number r̄ ≤ 10n. -/
+theorem p_rb {n Δ nb rb : ℕ} (hΔ : 2 ≤ Δ) (h : IsNb n Δ nb) (hr : rb ≤ 10 * n) : ((pp nb : ℚ) : ℝ) * rb < 64 * lg (2 * Δ) := by
   have hL := two_le_lg hΔ
   have hnb := nb_pos h
   have h1 := lt_nb_mul h
@@ -346,10 +347,10 @@ theorem lg_one_add_le {p : ℝ} (hp : 0 ≤ p) : lg (1 + p) ≤ 3 / 2 * p := by
   rw [div_le_iff₀ (by linarith)]
   nlinarith
 
-/-- t̄ ≤ log m + 33·log(2Δ) + 1 for the t̄ of the text (`IsTb m n̄ r̄ t̄`), for 2 ≤ Δ, m ≥ 1 and any
+/-- t̄ ≤ log m + 96·log(2Δ) + 1 for the t̄ of the text (`IsTb m n̄ r̄ t̄`), for 2 ≤ Δ, m ≥ 1 and any
 number r̄ ≤ 10n. -/
 theorem tb_le {n Δ m nb rb tb : ℕ} (hΔ : 2 ≤ Δ) (hm : 1 ≤ m) (h : IsNb n Δ nb) (hr : rb ≤ 10 * n) (ht : IsTb m nb rb tb) :
-    (tb : ℝ) ≤ lg m + 33 * lg (2 * Δ) + 1 := by
+    (tb : ℝ) ≤ lg m + 96 * lg (2 * Δ) + 1 := by
   have hL := two_le_lg hΔ
   have hm1 : (1 : ℝ) ≤ m := by exact_mod_cast hm
   have hlm : 0 ≤ lg m := Real.logb_nonneg (by norm_num) hm1

@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -40,7 +41,7 @@ def countD (k : ℕ) (pad : U) (i : Idx) (n Δ : ℕ) (ψ : Fml) : ℕ :=
   let M := Mb β rb
   bif decide (m ≤ nb) then (evF S k pad i n Δ nb M (ψ, [])).toNat
   else (evF S k pad i n Δ nb M
-    (ψ, searchD pad (fun L => evX S k pad i n Δ nb M β (ψ, L)) (Fld.famD m (Nat.log 2 nb)) m nb β rb (tbD m nb rb))).toNat
+    (ψ, searchD pad (fun L => evX S k pad i n Δ nb M β (ψ, L)) (Fld.famAmpD m (Nat.log 2 nb)) m nb β rb (tbD m nb rb))).toNat
 
 /-- What the count of one formula needs of the length of the pad, written F here (not the count F(𝓛)
 of Step 1): it must be at least the bounds below for the networks, the list of profiles and the list

@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -17,9 +19,9 @@ property that is closed upwards does not hold yet (r̄ and t̄ are this count c,
 If the
 property holds somewhere up to the bound, the count is the least number with the property
 (`count_spec`). For n̄ the property is (2Δ)^(2^a) > 2^n, which holds at a = ⌊log₂ n⌋ + 1; for r̄ it
-is 3^j·2^β < 4^j, which holds at j = 3β + 1 because 54 < 64; for t̄ it is
-m·(15n̄+16)^r̄ ≤ 2^c·(15n̄)^r̄, which holds at c = size m + r̄ if n̄ ≥ 2, because then 15n̄ + 16 ≤
-2·15n̄. -/
+is 9^j·2^β < 16^j, which holds at j = 3β + 1 because 1458 < 4096; for t̄ it is
+m·(15n̄+48)^r̄ ≤ 2^c·(15n̄)^r̄, which holds at c = size m + 2r̄ if n̄ ≥ 2, because then 15n̄ + 48 ≤
+4·15n̄. -/
 
 public section
 
@@ -105,25 +107,25 @@ theorem two_le_nbD (n Δ : ℕ) (hΔ : 1 ≤ Δ) (h : (2 * Δ) ^ 2 ≤ 2 ^ n) : 
 
 /-- The computed r̄ is the r̄ of the text. -/
 theorem isRb_rbD (β : ℕ) : IsRb β (rbD β) := by
-  refine count_spec (fun j => 3 ^ j * 2 ^ β < 4 ^ j) _ (3 * β + 2) (fun j => by simp only [decide_eq_true_eq]) (fun j hj => ?_) ⟨3 * β + 1, by omega, ?_⟩
+  refine count_spec (fun j => 9 ^ j * 2 ^ β < 16 ^ j) _ (3 * β + 2) (fun j => by simp only [decide_eq_true_eq]) (fun j hj => ?_) ⟨3 * β + 1, by omega, ?_⟩
   · rw [pow_succ, pow_succ]
-    have : 0 < 4 ^ j := by positivity
+    have : 0 < 16 ^ j := by positivity
     nlinarith
-  · have h : (54 : ℕ) ^ β ≤ 64 ^ β := Nat.pow_le_pow_left (by norm_num) β
-    have e1 : 3 ^ (3 * β + 1) * 2 ^ β = 3 * 54 ^ β := by
-      rw [pow_succ, pow_mul, show (54 : ℕ) = 3 ^ 3 * 2 by norm_num, mul_pow]; ring
-    have e2 : 4 ^ (3 * β + 1) = 4 * 64 ^ β := by
+  · have h : (1458 : ℕ) ^ β ≤ 4096 ^ β := Nat.pow_le_pow_left (by norm_num) β
+    have e1 : 9 ^ (3 * β + 1) * 2 ^ β = 9 * 1458 ^ β := by
+      rw [pow_succ, pow_mul, show (1458 : ℕ) = 9 ^ 3 * 2 by norm_num, mul_pow]; ring
+    have e2 : 16 ^ (3 * β + 1) = 16 * 4096 ^ β := by
       rw [pow_succ, pow_mul]; norm_num [mul_comm]
-    have : 0 < 64 ^ β := by positivity
+    have : 0 < 4096 ^ β := by positivity
     rw [e1, e2]
     omega
 
 /-- The condition on c in the definition of t̄, with the denominators cleared; for n̄ ≥ 1. -/
-theorem tb_iff (m nb rb c : ℕ) (hnb : 1 ≤ nb) : (m : ℚ) * (1 + pp nb) ^ rb ≤ 2 ^ c ↔ m * (15 * nb + 16) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb := by
+theorem tb_iff (m nb rb c : ℕ) (hnb : 1 ≤ nb) : (m : ℚ) * (1 + pp nb) ^ rb ≤ 2 ^ c ↔ m * (15 * nb + 48) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb := by
   have h0 : (0 : ℚ) < 15 * nb := by
     have : (1 : ℚ) ≤ nb := by exact_mod_cast hnb
     linarith
-  have e : 1 + pp nb = (15 * nb + 16) / (15 * nb) := by
+  have e : 1 + pp nb = (15 * nb + 48) / (15 * nb) := by
     unfold pp
     field_simp
   rw [e, div_pow, mul_div_assoc', div_le_iff₀ (pow_pos h0 rb)]
@@ -131,13 +133,13 @@ theorem tb_iff (m nb rb c : ℕ) (hnb : 1 ≤ nb) : (m : ℚ) * (1 + pp nb) ^ rb
 
 /-- The computed t̄ is the t̄ of the text, if n̄ ≥ 2. -/
 theorem isTb_tbD (m nb rb : ℕ) (hnb : 2 ≤ nb) : IsTb m nb rb (tbD m nb rb) := by
-  have h := count_spec (fun c => m * (15 * nb + 16) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb) (fun c => decide (¬ m * (15 * nb + 16) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb))
-    (Nat.size m + rb + 1) (fun j => by simp only [decide_eq_true_eq])
+  have h := count_spec (fun c => m * (15 * nb + 48) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb) (fun c => decide (¬ m * (15 * nb + 48) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb))
+    (Nat.size m + 2 * rb + 1) (fun j => by simp only [decide_eq_true_eq])
     (fun c hc => hc.trans (Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) (Nat.le_succ c))))
-    ⟨Nat.size m + rb, Nat.le_succ _, by
-      calc m * (15 * nb + 16) ^ rb ≤ 2 ^ Nat.size m * (2 * (15 * nb)) ^ rb :=
+    ⟨Nat.size m + 2 * rb, Nat.le_succ _, by
+      calc m * (15 * nb + 48) ^ rb ≤ 2 ^ Nat.size m * (2 ^ 2 * (15 * nb)) ^ rb :=
             Nat.mul_le_mul (Nat.lt_size_self m).le (Nat.pow_le_pow_left (by omega) rb)
-        _ = 2 ^ (Nat.size m + rb) * (15 * nb) ^ rb := by rw [mul_pow, pow_add, mul_assoc]⟩
+        _ = 2 ^ (Nat.size m + 2 * rb) * (15 * nb) ^ rb := by rw [mul_pow, ← pow_mul, pow_add, mul_assoc]⟩
   exact ⟨(tb_iff m nb rb _ (by omega)).2 h.1, fun c hc => fun hq => h.2 c hc ((tb_iff m nb rb c (by omega)).1 hq)⟩
 
 end Spec

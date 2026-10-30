@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -149,7 +151,7 @@ theorem fam_of (h14 : AppVariables.LemFamily) (m a : ℕ) (g : List Bool) (ha : 
     (hLst : Lst = ((wordsL g.length ×ˢ wordsL g.length ×ˢ wordsL g.length ×ˢ wordsL g.length).filter fun u =>
       decide (2 ^ a * (gamW m a g u).length ≤ 16 * m)).map (gamW m a g)) :
     Lst ≠ [] ∧ Lst.length < (32 * m) ^ 4 ∧ (∀ l ∈ Lst, l.Pairwise (· < ·) ∧ l.Nodup ∧ ∀ E ∈ l, E < m) ∧
-    AppVariables.IsFamily (2 ^ a) (Finset.univ : Finset (Fin Lst.length)) fun i => setD m (Lst.get i) := by
+    AppVariables.BaseFamily (2 ^ a) (Finset.univ : Finset (Fin Lst.length)) fun i => setD m (Lst.get i) := by
   subst hLst
   have : Fact (Irreducible (modP g)) := ⟨hirr⟩
   have hm1 : 1 ≤ m := Nat.one_le_two_pow.trans hm

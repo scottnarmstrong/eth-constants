@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -18,7 +19,7 @@ import Mathlib.Tactic.Ring
 
 Proves `VariableBound.StCountD` from the statements on the parts: the parameters (`StParamSpec`,
 `ParamIneq`), display (63) and the remark on the empty list of Step 1, Lemma 13 for the listed
-family (`Fld.StFamD`), the search of
+family (`Fld.StFamAmpD`), the search of
 Step 2 (`StSearchD`), and the networks of Step 3 (`Net.StFit`, `Net.StTbMax`, `Net.StNPrMax`,
 `Net.StEvXF`).
 
@@ -83,18 +84,18 @@ theorem sq_le (n Δ : ℕ) (h : 2 * LD Δ ≤ n) : (2 * Δ) ^ 2 ≤ 2 ^ n := by
     _ = 2 ^ (LD Δ * 2) := (pow_mul 2 _ 2).symm
     _ ≤ 2 ^ n := Nat.pow_le_pow_right (by norm_num) (by omega)
 
-/-- A check with n̄·|Λ| ≤ 16m has at most `sbMax Δ` clauses: s̄ = 16m/n̄ < 32Δ·log(2·scaleD Δ).
+/-- A check with n̄·|Λ| ≤ 48m has at most `sbMax Δ` clauses: s̄ = 48m/n̄ < 96Δ·log(2·scaleD Δ).
 Hypotheses: the inequalities of «Setting and parameters», 2 ≤ Δ, m ≤ Δn, n̄ the number of the text
 for `scaleD Δ`. -/
-theorem row_le (hIneq : ParamIneq) (n Δ m nb c : ℕ) (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hNb : IsNb n (scaleD Δ) nb) (h : nb * c ≤ 16 * m) : c ≤ sbMax Δ := by
+theorem row_le (hIneq : ParamIneq) (n Δ m nb c : ℕ) (hΔ : 2 ≤ Δ) (hm : m ≤ Δ * n) (hNb : IsNb n (scaleD Δ) nb) (h : nb * c ≤ 48 * m) : c ≤ sbMax Δ := by
   have h1 := (hIneq.sb_lt2 n Δ m nb hΔ hm hNb).1
   have h2 := lg_le_LD (scaleD Δ) (Ineq.one_le_scaleD (by omega))
   have h0 : (0 : ℝ) < nb := by
     obtain ⟨a, rfl⟩ := hNb.1
     positivity
-  have h3 : (nb : ℝ) * c ≤ 16 * m := by exact_mod_cast h
-  have h4 : (c : ℝ) ≤ 16 * m / nb := by rw [le_div_iff₀ h0]; linarith
-  have h5 : (32 : ℝ) * Δ * lg (2 * scaleD Δ) ≤ 32 * Δ * LD (scaleD Δ) := mul_le_mul_of_nonneg_left h2 (by positivity)
+  have h3 : (nb : ℝ) * c ≤ 48 * m := by exact_mod_cast h
+  have h4 : (c : ℝ) ≤ 48 * m / nb := by rw [le_div_iff₀ h0]; linarith
+  have h5 : (96 : ℝ) * Δ * lg (2 * scaleD Δ) ≤ 96 * Δ * LD (scaleD Δ) := mul_le_mul_of_nonneg_left h2 (by positivity)
   have h6 : (c : ℝ) ≤ (sbMax Δ : ℕ) := by unfold sbMax; push_cast; linarith
   exact_mod_cast h6
 
@@ -160,9 +161,9 @@ open Groundwork Groundwork.Prog PaddedDescent.F PaddedDescent.F.Mark ClauseBound
 /-- Steps 1 to 4 of Appendix D: the count of one sparse formula is right, given the statements on
 the evaluation by networks (`Net.StEvXF`, `Net.StFit`, `Net.StTbMax`, `Net.StNPrMax`), on the search
 (`StSearchD`), on the listed
-family of Lemma 13 (`Fld.StFamD`), on the parameters (`StParamSpec`, `ParamIneq`), display (63) and
+family of Lemma 13 (`Fld.StFamAmpD`), on the parameters (`StParamSpec`, `ParamIneq`), display (63) and
 the remark that the empty list has X = 0 if m ≤ n̄. -/
-theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP : Net.StNPrMax) (hS : StSearchD) (hFam : Fld.StFamD) (hSpec : StParamSpec)
+theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP : Net.StNPrMax) (hS : StSearchD) (hFam : Fld.StFamAmpD) (hSpec : StParamSpec)
     (hIneq : ParamIneq) (hProd : AppVariables.ProductStmt) (hEmpty : AppVariables.EmptyListStmt) : StCountD := by
   intro Idx _ S ok hC k pad i n Δ ψ hok hK hwf hocc hm hΔ hn hfit
   have hlg := Count.lg_le_LD Δ (by omega)
@@ -197,10 +198,10 @@ theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP 
       rw [hβ1] at hr; push_cast at hr
       have : (0 : ℝ) ≤ LD Δ := by positivity
       linarith
-    have hr'' : 2 * rb + 1 ≤ 5 * n := by
-      have h1 : (rb : ℝ) ≤ 2.41 * (n + 1) + 1 := by rw [hβ1] at hr; push_cast at hr; exact hr
+    have hr'' : 2 * rb + 1 ≤ 3 * n := by
+      have h1 : (rb : ℝ) ≤ 1.21 * (n + 1) + 1 := by rw [hβ1] at hr; push_cast at hr; exact hr
       have h2 : (2 : ℝ) ≤ LD Δ := le_trans (Ineq.two_le_lg hΔ) hlg
-      have : ((2 * rb + 1 : ℕ) : ℝ) ≤ ((5 * n : ℕ) : ℝ) := by push_cast; linarith
+      have : ((2 * rb + 1 : ℕ) : ℝ) ≤ ((3 * n : ℕ) : ℝ) := by push_cast; linarith
       exact_mod_cast this
     have hF := (hFit k n Δ nb rb tb (Mb β rb) ψ [] hwf hΔ hocc hm hNb (by rw [hM]; omega) (by rw [hM]; omega)
       (fun _ => by rw [hM]; omega)).2 hc
@@ -227,7 +228,7 @@ theorem stCountD (hEv : Net.StEvXF) (hFit : Net.StFit) (hTb : Net.StTbMax) (hNP 
     obtain ⟨hne, -, hinc, hfam⟩ := hFam ψ.length a ha1 (by rw [← ha]; omega)
     rw [hlog]
     rw [← ha] at hfam
-    have hres := hS (Fin n → Bool) ψ.length (Vof (n := n) ψ) n nb rb tb pad (fun L => evX S k pad i n Δ nb (Mb β rb) β (ψ, L)) (Fld.famD ψ.length a)
+    have hres := hS (Fin n → Bool) ψ.length (Vof (n := n) ψ) n nb rb tb pad (fun L => evX S k pad i n Δ nb (Mb β rb) β (ψ, L)) (Fld.famAmpD ψ.length a)
       (by simp) (by omega) (by rw [hβ]; exact hRb) hTbI hne (fun l hl => ⟨(hinc l hl).1, (hinc l hl).2.2⟩) hfam
       (fun L hL => by
         have := (hEv Idx S ok hC k pad i n Δ nb (Mb β rb) (ψ, L) hok hK (hfitL L hL) ((hNP k (S.K i) n Δ nb (Mb β rb) (ψ, L) (hfitL L hL)).trans hfit.prof) hfit.net

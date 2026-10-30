@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -26,7 +28,7 @@ import VariableBound.Printed.Tied
 import VariableBound.Paper.Decide
 import VariableBound.StepParity
 import VariableBound.Family.Main
-import VariableBound.Field.Family
+import VariableBound.Field.Amplify
 import VariableBound.Params.Spec
 import VariableBound.Params.Ineq
 import VariableBound.Search.Correct
@@ -119,7 +121,7 @@ theorem evXFAB : Net.StEvXF := Net.Ev.stEvXF evAB VariableBound.xf VariableBound
 /-- Steps 1 to 4: the count of one sparse formula is right (`VariableBound.StCountD`); from
 `evXFAB`. -/
 theorem countAB : StCountD :=
-  stCountD evXFAB Net.Main.fit Net.Main.tbMax Net.Main.nPrMax stSearchD (Fld.stFamD lemFamily) stParamSpec paramIneq product emptyList
+  stCountD evXFAB Net.Main.fit Net.Main.tbMax Net.Main.nPrMax stSearchD Fld.famAmpD_isFamily stParamSpec paramIneq product emptyList
 
 /-- For thresholds that serve and every polynomial-time solver with a sequence of levels, the
 function `ADG Θ` for the bound in n is right on every k-CNF, for every k ≥ 1 and every n, when the

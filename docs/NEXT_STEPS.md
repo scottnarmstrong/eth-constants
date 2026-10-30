@@ -17,12 +17,12 @@ each level while `e_l` falls only by `√2`, the outer exponent of the cutoff gr
 like `A²`: halving `A` divides it by about four, up to integer rounding of the
 level.
 
-The leading coefficient is now `A = 965`. Almost all of it,
-`2k·3.5·45 = 945`, pays for the marks of the parity checks: at most `3.5n`
-marks, each charged `⌈log₂(96Δ⌈log₂(2·scaleD Δ)⌉)⌉ = 45` bits at each of its
-`k = 3` tests. The occurrence bound is `Δ = 2^26`, that of Calabro's
-thresholds at precision four, and `scaleD Δ = 2^127·Δ^128` sets the
-inclusion–exclusion cutoff `n̄ ≈ n/(128 log₂ 2Δ)`.
+The leading coefficient is now `A = 710`. Almost all of it,
+`2k·2.5·46 = 690`, pays for the marks of the parity checks: at most `2.5n`
+marks, each charged 46 bits at each of its `k = 3` tests. Threefold XOR
+amplification improves the guaranteed detection probability from `1/4` to
+`7/16`, allowing fewer checks. The occurrence bound is `Δ = 2^26`, and
+`scaleD Δ = 2^127·Δ^128` sets `n̄ ≈ n/(128 log₂ 2Δ)`.
 
 ## Checked improvements so far
 
@@ -34,35 +34,35 @@ inclusion–exclusion cutoff `n̄ ≈ n/(128 log₂ 2Δ)`.
 | Calabro's occurrence bound `2^26`, at most `8n` marks | 1,861 | 21 | `10^580000000` |
 | Cutoff `n̄ ≈ n/(32 log₂ 2Δ)`, at most `4.5n` marks | 1,181 | 20 | `10^290000000` |
 | Cutoff `n̄ ≈ n/(128 log₂ 2Δ)`, at most `3.5n` marks | 965 | 19 | `10^145000000` |
+| Triple XOR, detection `7/16`, at most `2.5n` marks | 710 | 18 | `10^72500000` |
 
 ## Next steps, with estimates
 
 The estimates below come from a floating-point model of the budget and are
 not proofs.
 
-1. **Use a stronger family of parity checks.** Lemma 13 guarantees that a
-   quarter of the checks have odd intersection with a large violated set, so
-   `r̄ ≈ 2.41β` checks are needed and `M = r̄ + β − 1 ≈ 3.4β`. With `β` now
-   close to `n`, this is the main remaining factor. A family that achieves
-   0.4–0.45 (a higher subsampling rate and a larger field) would give
-   `r̄ ≈ 1.2–1.4β` and about `2.3–2.5n` marks, at 2 to 4 more bits per mark.
-   Level 18 needs `A < 744`, and `A < 727` with the proved recurrence bound.
-   Estimate: `A ≈ 700–750`, at the edge of level 18 (cutoff about
-   `10^(7.2·10^7)`).
-2. **Shorten the marks.** Each mark is charged `⌈log₂(96Δ⌈log₂(2·scaleD Δ)⌉)⌉`
-   bits: 26 for `Δ`, 12 for `log₂(2·scaleD Δ)`, and 7 for the factor 96. A count
-   of the incidences that uses the actual number of checks rather than `M`, or
-   a smaller precision for width three, would shorten each mark by a few bits.
-3. **Smaller corrections.** The top-level grouping on `g = 3K^8` nodes forces
-   `K^17 ≤ n`; a sharper concentration argument could replace 17 by about 13.
-   Separating `K_0` from the balancing factor in the level schedule would also
-   help slightly. Together these may lower the outer exponent by a factor of
-   1.3 to 1.7.
+1. **Sharpen the number of marks.** We round the mark bound up to `2.5n`.
+   With `r̄ ≤ 1.21β+1` and the existing estimate for `β`, a coefficient
+   closer to `2.25n` may be possible by retaining rational coefficients.
+   This would improve the budget but, alone, would not save the next level.
+2. **Try fivefold XOR or a better original family.** Five XORs give detection
+   at least `31/64`, with checks at most five times as large as the original.
+   The gain competes with larger mark bit lengths and a family of size up to
+   `(32m)^20`. This remains unimplemented and unproved in this repository.
+3. **Shorten or charge fewer marks.** Level 17 requires `A < 526.36` under
+   the tightly evaluated recurrence, or about `A < 514.26` with the current
+   uniform Lean recurrence bound. Reducing 710 to that range likely needs
+   stronger checks together with a smaller mark charge or occurrence bound.
+4. **Improve the level schedule or grouping.** Replacing the `K^17 ≤ n`
+   constraint or lowering the starting schedule could reduce the outer
+   exponent without saving a whole level. These require new proofs, rather
+   than changing a numeral in the cutoff theorem.
 
-The sufficient cutoff `log₂ n ≈ 4.8·10^8` lies below the threshold
-`log₂ n > 8.5·10^9` that the paper's Appendix D gives as necessary for its own
-choice of parameters. The two analyses use different parameters, so this is a
-comparison of numbers, not of claims.
+The present exact level threshold has decimal exponent approximately
+72,441,577.04. Tighter decimal rounding offers a small numerical saving;
+reaching level 17 would reduce it to about 36,220,445.65. The interval script
+shows that the current sufficient budget expression is above one at level 17.
+This is a limitation of this certificate, not a lower bound on actual runtime.
 
 ## What the proposed target requires
 
@@ -72,8 +72,8 @@ and `10^141018.10`.
 
 Exact rational interval evaluation gives `e_8` approximately 0.04025996.
 At precision four, making an expression `A·e_8 + 1/16` smaller than one
-would require `A < 23.2862`. The current coefficient is 965, a gap of
-about 41 times; with it the expression is about 38.9. These are
+would require `A < 23.2862`. The current coefficient is 710, a gap of
+about 30.5 times; with it the expression is about 28.65. These are
 calculations about a sufficient bound; they are not a lower bound on the
 actual runtime or a proof that another analysis cannot reach the target.
 
@@ -82,12 +82,12 @@ nonnegative coefficient making that expression less than one must be below
 30. It uses the rigorous lower bound `e_8 >= 1/32`. The sharper value 23.2862
 comes from the accompanying interval calculation, not this Lean theorem.
 
-Within the present design the target is out of reach. The marks number at
-least about `2n`, and each costs at least about `log₂ Δ` bits at each test, so
-`A` stays above several hundred, which corresponds to a cutoff no lower than
-roughly `10^(10^8)`. Reaching `10^100000` would need new mathematics: pieces
-with a contraction rate below `1/√2`, which would change the `A²` law, or a
-reduction from 3-SAT with a far smaller coefficient.
+Reaching `10^100000` requires a much larger change than the XOR improvement.
+In the present budget model, even the non-mark leading cost is 18 before
+rounding and lower-order allowances. A coefficient below 23.2862 would leave
+very little room for parity-check marks. A substantially different reduction,
+mark encoding, or faster contraction of the recursive exponent is needed.
+This is an assessment of the current proof strategy, not an impossibility theorem.
 
 Run `python3 scripts/analyze_cutoff.py` to reproduce the interval calculations.
 They enclose `1/sqrt(2)` by rational numbers and bound every discarded positive

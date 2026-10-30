@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -27,7 +28,7 @@ roundings per pair (`sum_cw_le`, `two_mul_pairs_le`). The result is display (68)
 14n and k − 1 in place of k in its first term (`stU`), and as printed if M ≤ 14n (`stUPrinted`). The
 constants 6, 28, 96 and 2g² are those of the text.
 That U is twice the sum over the pairs, and the count of the tests of an object, come from
-`VariableBound.Net.Tests`. Of «Setting and parameters», the bounds s̄ < 32Δ·log(2Δ) and 3m/(n̄ + 1)
+`VariableBound.Net.Tests`. Of «Setting and parameters», the bounds s̄ < 96Δ·log(2Δ) and 3m/(n̄ + 1)
 < 6Δ·log(2Δ) ≤ (2Δ)³ are read from the hypothesis
 `ParamIneq`; display (59), log(2Δ) ≥ 2, n̄ ≥ 1 and n̄·log(2Δ) ≤ n are taken from
 `VariableBound.Params.Ineq`. -/
@@ -99,14 +100,14 @@ theorem nb_mul_sum_le (nb c : ℕ) (Ls : List (List ℕ)) (h : ∀ L ∈ Ls, nb 
     simp only [List.map_cons, List.sum_cons, List.length_cons]
     nlinarith
 
-/-- Step 3, «The total»: «T₀ ≤ (k − 1)m and T₁ ≤ kr·s̄», the second as T₁ ≤ kI and n̄·I ≤ r·16m,
-that is I ≤ r·s̄ with s̄ = 16m/n̄. Here T_κ is the sum of the t_(a,b,κ) over the pairs a < b < g and
+/-- Step 3, «The total»: «T₀ ≤ (k − 1)m and T₁ ≤ kr·s̄», the second as T₁ ≤ kI and n̄·I ≤ r·48m,
+that is I ≤ r·s̄ with s̄ = 48m/n̄. Here T_κ is the sum of the t_(a,b,κ) over the pairs a < b < g and
 I the number of incidences.
-Needs k ≥ 1, ψ and the checks well formed, and n̄·|Λ_j| ≤ 16m for every check. -/
-theorem tests_le (g : ℕ) (hk : 1 ≤ k) (hW : WfD k n D) (hrow : ∀ L ∈ D.2, nb * L.length ≤ 16 * D.1.length) :
+Needs k ≥ 1, ψ and the checks well formed, and n̄·|Λ_j| ≤ 48m for every check. -/
+theorem tests_le (g : ℕ) (hk : 1 ≤ k) (hW : WfD k n D) (hrow : ∀ L ∈ D.2, nb * L.length ≤ 48 * D.1.length) :
     ∑ b ∈ range g, ∑ a ∈ range b, (tst g n D a b 0).length ≤ (k - 1) * D.1.length ∧
       ∑ b ∈ range g, ∑ a ∈ range b, (tst g n D a b 1).length ≤ k * (D.2.map List.length).sum ∧
-      nb * (D.2.map List.length).sum ≤ D.2.length * (16 * D.1.length) := by
+      nb * (D.2.map List.length).sum ≤ D.2.length * (48 * D.1.length) := by
   refine ⟨?_, ?_, nb_mul_sum_le nb _ D.2 hrow⟩
   · have h := Tests.sum_length_tst_le (g := g) hW 0
     rwa [Tests.card_kind_zero hW, Nat.add_zero] at h
@@ -163,29 +164,29 @@ theorem kind_zero_le (hp : ParamIneq) {k n Δ m nb T μ : ℕ} (hΔ : 2 ≤ Δ) 
     nlinarith
 
 /-- Step 3, «The total»: «With μ' = kM and 3T₁/μ' ≤ 3s̄ (as r ≤ M), kind 1 costs at most kM·log(3s̄)
-bits», where s̄ = 16m/n̄; this is at most kM·log(96Δ·log(2Δ)), as 3s̄ < 96Δ·log(2Δ). Needs 2 ≤ Δ, n̄
+bits», where s̄ = 48m/n̄; this is at most kM·log(288Δ·log(2Δ)), as 3s̄ < 96Δ·log(2Δ). Needs 2 ≤ Δ, n̄
 < m ≤ Δn, the n̄ of the text, k ≥ 1, r ≤ M, M ≥ 1,
-I ≤ r·s̄ (as n̄·I ≤ r·16m), T₁ ≤ kI and μ₁ ≤ kM, and the inequalities of «Setting and parameters». -/
+I ≤ r·s̄ (as n̄·I ≤ r·48m), T₁ ≤ kI and μ₁ ≤ kM, and the inequalities of «Setting and parameters». -/
 theorem kind_one_le (hp : ParamIneq) {k n Δ m nb M r I T μ : ℕ} (hΔ : 2 ≤ Δ) (hnm : nb < m) (hm : m ≤ Δ * n) (hnb : IsNb n (scaleD Δ) nb) (hk : 1 ≤ k) (hr : r ≤ M)
-    (hM : 1 ≤ M) (hI : nb * I ≤ r * (16 * m)) (hT : T ≤ k * I) (hμ : μ ≤ k * M) :
-    lg (T.choose μ) ≤ k * M * lg (3 * (16 * m / nb)) ∧ (k : ℝ) * M * lg (3 * (16 * m / nb)) ≤ k * M * lg (96 * Δ * lg (2 * scaleD Δ)) := by
+    (hM : 1 ≤ M) (hI : nb * I ≤ r * (48 * m)) (hT : T ≤ k * I) (hμ : μ ≤ k * M) :
+    lg (T.choose μ) ≤ k * M * lg (3 * (48 * m / nb)) ∧ (k : ℝ) * M * lg (3 * (48 * m / nb)) ≤ k * M * lg (288 * Δ * lg (2 * scaleD Δ)) := by
   have hnb1 : (1 : ℝ) ≤ nb := Ineq.nb_pos hnb
   have hnb0 : (0 : ℝ) < nb := by linarith
   have hkr : (0 : ℝ) < k := by exact_mod_cast hk
   have hMr : (0 : ℝ) < M := by exact_mod_cast hM
-  have hs : (16 : ℝ) ≤ 16 * m / nb := by
+  have hs : (48 : ℝ) ≤ 48 * m / nb := by
     rw [le_div_iff₀ hnb0]
     have : (nb : ℝ) ≤ m := by exact_mod_cast hnm.le
     linarith
   refine ⟨?_, ?_⟩
   · have h1 : 1 ≤ k * M := Nat.mul_pos hk hM
     have h2 := Ineq.binom (t := T) hμ h1
-    have h3 : 3 * (T : ℝ) / ((k * M : ℕ) : ℝ) ≤ 3 * (16 * m / nb) := by
+    have h3 : 3 * (T : ℝ) / ((k * M : ℕ) : ℝ) ≤ 3 * (48 * m / nb) := by
       have hT' : (T : ℝ) ≤ k * I := by exact_mod_cast hT
-      have hI' : (nb : ℝ) * I ≤ r * (16 * m) := by exact_mod_cast hI
+      have hI' : (nb : ℝ) * I ≤ r * (48 * m) := by exact_mod_cast hI
       have hr' : (r : ℝ) ≤ M := by exact_mod_cast hr
-      have hI2 : (I : ℝ) ≤ M * (16 * m / nb) := by
-        have : (I : ℝ) ≤ r * (16 * m) / nb := by rw [le_div_iff₀ hnb0]; linarith
+      have hI2 : (I : ℝ) ≤ M * (48 * m / nb) := by
+        have : (I : ℝ) ≤ r * (48 * m) / nb := by rw [le_div_iff₀ hnb0]; linarith
         refine this.trans ?_
         rw [mul_div_assoc]
         exact mul_le_mul_of_nonneg_right hr' (by linarith)
@@ -193,14 +194,14 @@ theorem kind_one_le (hp : ParamIneq) {k n Δ m nb M r I T μ : ℕ} (hΔ : 2 ≤
       rw [div_le_iff₀ (by positivity)]
       have := mul_le_mul_of_nonneg_left hI2 hkr.le
       nlinarith
-    have h5 : lg (3 * (T : ℝ) / ((k * M : ℕ) : ℝ)) ≤ lg (3 * (16 * m / nb)) := lg_le_lg (by positivity) h3 (by linarith)
-    have h6 : 1 ≤ lg (3 * (16 * (m : ℝ) / nb)) := by
+    have h5 : lg (3 * (T : ℝ) / ((k * M : ℕ) : ℝ)) ≤ lg (3 * (48 * m / nb)) := lg_le_lg (by positivity) h3 (by linarith)
+    have h6 : 1 ≤ lg (3 * (48 * (m : ℝ) / nb)) := by
       have : lg 2 = 1 := by unfold lg; exact Real.logb_self_eq_one (by norm_num)
       rw [← this]
       exact lg_le_lg (by norm_num) (by linarith) (by linarith)
     calc lg (T.choose μ) ≤ ((k * M : ℕ) : ℝ) * max 1 (lg (3 * (T : ℝ) / ((k * M : ℕ) : ℝ))) := h2
-      _ ≤ ((k * M : ℕ) : ℝ) * lg (3 * (16 * m / nb)) := mul_le_mul_of_nonneg_left (max_le h6 h5) (Nat.cast_nonneg _)
-      _ = k * M * lg (3 * (16 * m / nb)) := by push_cast; ring
+      _ ≤ ((k * M : ℕ) : ℝ) * lg (3 * (48 * m / nb)) := mul_le_mul_of_nonneg_left (max_le h6 h5) (Nat.cast_nonneg _)
+      _ = k * M * lg (3 * (48 * m / nb)) := by push_cast; ring
   · have h4 := (hp.sb_lt2 n Δ m nb hΔ hm hnb).1
     refine mul_le_mul_of_nonneg_left (lg_le_lg (by linarith) (by linarith) (by linarith)) (by positivity)
 
@@ -230,7 +231,7 @@ theorem two_mul_pairs_le (g : ℕ) : 2 * ∑ b ∈ range g, b ≤ g ^ 2 := by
 
 /-- Step 3, «The total», display (68) before display (61) is used: in the setting of Step 3 for m >
 n̄, with g ≥ 1 nodes, the network of an admissible profile has U ≤ 6(k − 1)(n + log(2Δ)) +
-2kM·log(96Δ·log(2Δ)) + 2g². Needs the
+2kM·log(288Δ·log(2Δ)) + 2g². Needs the
 inequalities of «Setting and parameters» (the hypothesis `ParamIneq`, proved as
 `VariableBound.paramIneq`). -/
 theorem stU (hp : ParamIneq) : StU := by
@@ -263,20 +264,20 @@ theorem stU (hp : ParamIneq) : StU := by
 
 /-- Step 3, «The total», display (68) as printed: in the setting of Step 3 for m > n̄, with g ≥ 1
 nodes and M ≤ 14n from display (61), the network of an admissible profile has
-U ≤ 6k(n + log(2Δ)) + 28kn·log(96Δ·log(2Δ)) + 2g². Follows from display (68) with M. -/
+U ≤ 6k(n + log(2Δ)) + 28kn·log(288Δ·log(2Δ)) + 2g². Follows from display (68) with M. -/
 theorem stUPrinted (h : StU) : StUPrinted := by
   intro k g n Δ nb M D fl y hg hS hM hadm
   have h1 := h k g n Δ nb M D fl y hg hS hadm
   have hl := Ineq.two_le_lg hS.two
   have hΔ : (2 : ℝ) ≤ Δ := by exact_mod_cast hS.two
   have hs := Ineq.lg_two_scaleD Δ
-  have hL : 0 ≤ lg (96 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by rw [hs]; nlinarith)
+  have hL : 0 ≤ lg (288 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by rw [hs]; nlinarith)
   have hn : (0 : ℝ) ≤ n := Nat.cast_nonneg _
   have hk0 : (0 : ℝ) ≤ k := Nat.cast_nonneg _
   have hk : ((k - 1 : ℕ) : ℝ) ≤ k := by exact_mod_cast Nat.sub_le k 1
   have hM' : (M : ℝ) ≤ 14 * n := by exact_mod_cast hM
   have e1 : ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) ≤ k * (n + lg (2 * Δ)) := mul_le_mul_of_nonneg_right hk (by linarith)
-  have e2 : (k : ℝ) * M * lg (96 * Δ * lg (2 * scaleD Δ)) ≤ k * (14 * n) * lg (96 * Δ * lg (2 * scaleD Δ)) :=
+  have e2 : (k : ℝ) * M * lg (288 * Δ * lg (2 * scaleD Δ)) ≤ k * (14 * n) * lg (288 * Δ * lg (2 * scaleD Δ)) :=
     mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hM' hk0) hL
   linarith
 
