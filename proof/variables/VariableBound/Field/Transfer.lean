@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -82,8 +84,8 @@ theorem famD_eq (m a : ℕ) : famD m a =
 
 /-- (a), (b), (c) of Lemma 13 (Family of checks) pass along an injective map φ of index sets with Ω =
 φ(Ω'). -/
-theorem isFamily_comap {E ι ι' : Type} [Fintype E] [DecidableEq E] {v : ℕ} {Ω : Finset ι} {Γ : ι → Finset E} (h : AppVariables.IsFamily v Ω Γ)
-    (φ : ι' ↪ ι) (Ω' : Finset ι') (hΩ : Ω = Ω'.map φ) : AppVariables.IsFamily v Ω' fun i => Γ (φ i) := by
+theorem isFamily_comap {E ι ι' : Type} [Fintype E] [DecidableEq E] {v : ℕ} {Ω : Finset ι} {Γ : ι → Finset E} (h : AppVariables.BaseFamily v Ω Γ)
+    (φ : ι' ↪ ι) (Ω' : Finset ι') (hΩ : Ω = Ω'.map φ) : AppVariables.BaseFamily v Ω' fun i => Γ (φ i) := by
   subst hΩ
   refine ⟨fun u hu => h.a _ (Finset.mem_map_of_mem φ hu), fun e => ?_, fun V hV => ?_⟩
   · have := h.b e
@@ -97,8 +99,8 @@ Lemma 13 (Family of checks) for v, then the list `L.map G` has |Ω| members, and
 their places, have (a), (b), (c) for v. -/
 theorem isFamily_list {m v : ℕ} {ι U : Type} (Ω : Finset ι) (Γ : ι → Finset (Fin m)) (L : List U) (D : U → ι) (G : U → List ℕ)
     (hL : L.Nodup) (hD : ∀ u ∈ L, ∀ u' ∈ L, D u = D u' → u = u') (hΩ : ∀ w, w ∈ Ω ↔ ∃ u ∈ L, D u = w)
-    (hG : ∀ u ∈ L, setD m (G u) = Γ (D u)) (h : AppVariables.IsFamily v Ω Γ) :
-    #Ω = (L.map G).length ∧ AppVariables.IsFamily v (univ : Finset (Fin (L.map G).length)) fun i => setD m ((L.map G).get i) := by
+    (hG : ∀ u ∈ L, setD m (G u) = Γ (D u)) (h : AppVariables.BaseFamily v Ω Γ) :
+    #Ω = (L.map G).length ∧ AppVariables.BaseFamily v (univ : Finset (Fin (L.map G).length)) fun i => setD m ((L.map G).get i) := by
   have hlen : (L.map G).length = L.length := List.length_map G
   let φ : Fin (L.map G).length ↪ ι := ⟨fun i => D (L.get (i.cast hlen)), fun i j hij => by
     have := hD _ (List.get_mem L _) _ (List.get_mem L _) hij

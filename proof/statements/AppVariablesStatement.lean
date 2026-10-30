@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -107,10 +109,16 @@ end StepParity
 /-- What Lemma 13 says of sets Γ_u, u ∈ Ω, of clauses, for the number v: (a) |Γ_u| ≤ 16m/v; (b)
 every clause lies in Γ_u for at most (16/(15v))·|Ω| indices u; (c) for every set V of more than v
 clauses, |Γ_u ∩ V| is odd for at least |Ω|/4 indices u. -/
-structure IsFamily {E ι : Type} [Fintype E] [DecidableEq E] (v : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) : Prop where
+structure BaseFamily {E ι : Type} [Fintype E] [DecidableEq E] (v : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) : Prop where
   a : ∀ u ∈ Ω, v * #(Γ u) ≤ 16 * Fintype.card E
   b : ∀ e : E, 15 * v * #{u ∈ Ω | e ∈ Γ u} ≤ 16 * #Ω
   c : ∀ V : Finset E, v < #V → #Ω ≤ 4 * #{u ∈ Ω | Odd #(Γ u ∩ V)}
+
+/-- The amplified family: three XORs of the original checks. -/
+structure IsFamily {E ι : Type} [Fintype E] [DecidableEq E] (v : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) : Prop where
+  a : ∀ u ∈ Ω, v * #(Γ u) ≤ 48 * Fintype.card E
+  b : ∀ e : E, 15 * v * #{u ∈ Ω | e ∈ Γ u} ≤ 48 * #Ω
+  c : ∀ V : Finset E, v < #V → 7 * #Ω ≤ 16 * #{u ∈ Ω | Odd #(Γ u ∩ V)}
 
 section Family
 
@@ -138,7 +146,7 @@ field 𝔽 with 2^s elements, 16m ≤ 2^s < 32m, the sets Γ_u, u ∈ Ω, have 0
 Step 2 needs it. -/
 def LemFamily : Prop := ∀ (F : Type) [Field F] [Fintype F] [DecidableEq F] [Algebra (ZMod 2) F] (m s a : ℕ) (bits : F ≃ₗ[ZMod 2] (Fin s → ZMod 2)) (ϑ : Fin m ↪ F),
   1 ≤ a → 2 ^ a ≤ m → 16 * m ≤ 2 ^ s → 2 ^ s < 32 * m →
-  0 < #(Om bits ϑ a) ∧ #(Om bits ϑ a) < (32 * m) ^ 4 ∧ IsFamily (2 ^ a) (Om bits ϑ a) (Gam bits ϑ a)
+  0 < #(Om bits ϑ a) ∧ #(Om bits ϑ a) < (32 * m) ^ 4 ∧ BaseFamily (2 ^ a) (Om bits ϑ a) (Gam bits ϑ a)
 
 /-! ## Setting and parameters -/
 
@@ -150,14 +158,14 @@ def IsNb (n Δ nb : ℕ) : Prop := (∃ a, nb = 2 ^ a) ∧ (2 * Δ) ^ nb ≤ 2 ^
 /-- β = n + ⌈log C(m, n̄+1)⌉ + 1. -/
 def beta (n m nb : ℕ) : ℕ := n + Nat.clog 2 (m.choose (nb + 1)) + 1
 
-/-- r̄ is the least j ≥ 0 with 3^j·2^β < 4^j. -/
-def IsRb (β rb : ℕ) : Prop := 3 ^ rb * 2 ^ β < 4 ^ rb ∧ ∀ j < rb, ¬ 3 ^ j * 2 ^ β < 4 ^ j
+/-- r̄ is the least j ≥ 0 with 9^j·2^β < 16^j. -/
+def IsRb (β rb : ℕ) : Prop := 9 ^ rb * 2 ^ β < 16 ^ rb ∧ ∀ j < rb, ¬ 9 ^ j * 2 ^ β < 16 ^ j
 
 /-- M = r̄ + β − 1. -/
 def Mb (β rb : ℕ) : ℕ := rb + β - 1
 
-/-- p = 16/(15·n̄). -/
-def pp (nb : ℕ) : ℚ := 16 / (15 * nb)
+/-- p = 48/(15·n̄). -/
+def pp (nb : ℕ) : ℚ := 48 / (15 * nb)
 
 /-- t̄ is the least c ≥ 0 with 2^c ≥ m·(1+p)^r̄. -/
 def IsTb (m nb rb tb : ℕ) : Prop := (m : ℚ) * (1 + pp nb) ^ rb ≤ 2 ^ tb ∧ ∀ c < tb, ¬ (m : ℚ) * (1 + pp nb) ^ rb ≤ 2 ^ c
@@ -171,9 +179,9 @@ variable {X E ι : Type} [Fintype X] [Fintype E] [DecidableEq E]
 /-- load(E): the number of checks of the list that contain the clause E. -/
 def load (L : List (Finset E)) (e : E) : ℕ := (L.filter fun Λ => e ∈ Λ).length
 
-/-- Υ(𝓛) = (4/3)^r·X(𝓛)/2^(β−1) + (1+p)^(r̄−r)·2^(−t̄)·Σ_E 2^load(E). -/
+/-- Υ(𝓛) = (16/9)^r·X(𝓛)/2^(β−1) + (1+p)^(r̄−r)·2^(−t̄)·Σ_E 2^load(E). -/
 def Ups (V : X → Finset E) (nb β rb tb : ℕ) (L : List (Finset E)) : ℚ :=
-  (4 / 3) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) + (1 + pp nb) ^ (rb - L.length) * (1 / 2 ^ tb) * ∑ e : E, (2 : ℚ) ^ load L e
+  (16 / 9) ^ L.length * (Xsum V nb L : ℚ) / 2 ^ (β - 1) + (1 + pp nb) ^ (rb - L.length) * (1 / 2 ^ tb) * ∑ e : E, (2 : ℚ) ^ load L e
 
 /-- The lists that the algorithm reaches: the empty list; and, if 𝓛 is reached and X(𝓛) > 0, a list
 (𝓛, Γ_u), u ∈ Ω, with the smallest Υ. -/
@@ -189,9 +197,9 @@ n̄+1)⌉ + 1 for m the number of clauses
 (a), (b), (c) of Lemma 13 for v = n̄ (`IsFamily`). -/
 structure StepChoice : Prop where
   /-- for a family as in Lemma 13 with v = n̄: the average of X(𝓛, Γ_u) over u ∈ Ω is at most
-  (3/4)·X(𝓛) -/
+  (9/16)·X(𝓛) -/
   avgX : ∀ (X E ι : Type) [Fintype X] [Fintype E] [DecidableEq E] (V : X → Finset E) (nb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)),
-    IsFamily nb Ω Γ → 4 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u]) ≤ 3 * #Ω * Xsum V nb L
+    IsFamily nb Ω Γ → 16 * ∑ u ∈ Ω, Xsum V nb (L ++ [Γ u]) ≤ 9 * #Ω * Xsum V nb L
   /-- for n̄ ≥ 1 and a family as in Lemma 13 with v = n̄: the average of 2^[E ∈ Γ_u] over u ∈ Ω is
   at most 1 + p -/
   avgCol : ∀ (E ι : Type) [Fintype E] [DecidableEq E] (nb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (e : E), 1 ≤ nb →
@@ -205,10 +213,10 @@ structure StepChoice : Prop where
   ups_le : ∀ (X E ι : Type) [Fintype X] [Fintype E] [DecidableEq E] (V : X → Finset E) (n nb rb tb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)),
     Fintype.card X ≤ 2 ^ n → 1 ≤ nb → IsRb (beta n (Fintype.card E) nb) rb → IsTb (Fintype.card E) nb rb tb → IsFamily nb Ω Γ →
     Reached V nb (beta n (Fintype.card E) nb) rb tb Ω Γ L → L.length ≤ rb ∧ Ups V nb (beta n (Fintype.card E) nb) rb tb L ≤ 2
-  /-- under the hypotheses of `ups_le`: every reached list has X(𝓛) ≤ (3/4)^r·2^β -/
+  /-- under the hypotheses of `ups_le`: every reached list has X(𝓛) ≤ (9/16)^r·2^β -/
   x_le : ∀ (X E ι : Type) [Fintype X] [Fintype E] [DecidableEq E] (V : X → Finset E) (n nb rb tb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)),
     Fintype.card X ≤ 2 ^ n → 1 ≤ nb → IsRb (beta n (Fintype.card E) nb) rb → IsTb (Fintype.card E) nb rb tb → IsFamily nb Ω Γ →
-    Reached V nb (beta n (Fintype.card E) nb) rb tb Ω Γ L → 4 ^ L.length * Xsum V nb L ≤ 3 ^ L.length * 2 ^ beta n (Fintype.card E) nb
+    Reached V nb (beta n (Fintype.card E) nb) rb tb Ω Γ L → 16 ^ L.length * Xsum V nb L ≤ 9 ^ L.length * 2 ^ beta n (Fintype.card E) nb
   /-- for any β, r̄, t̄ and any sets Γ_u, if Ω is not empty: a reached list with X(𝓛) > 0 has a
   reached extension (𝓛, Γ_u), u ∈ Ω -/
   progress : ∀ (X E ι : Type) [Fintype X] [Fintype E] [DecidableEq E] (V : X → Finset E) (nb β rb tb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L : List (Finset E)),
@@ -220,11 +228,11 @@ structure StepChoice : Prop where
     Reached V nb (beta n (Fintype.card E) nb) rb tb Ω Γ L → L.length = rb → Xsum V nb L = 0
   /-- the bounds at the end of Step 2, under the hypotheses of `ups_le`: every list whose X or F is
   needed (a reached list, or one with X > 0 and one more Γ_u, u ∈ Ω) has r ≤ r̄, |Λ_j| ≤ s̄ =
-  16m/n̄, load(E) ≤ t̄ + 2 -/
+  48m/n̄, load(E) ≤ t̄ + 2 -/
   structure_ : ∀ (X E ι : Type) [Fintype X] [Fintype E] [DecidableEq E] (V : X → Finset E) (n nb rb tb : ℕ) (Ω : Finset ι) (Γ : ι → Finset E) (L L' : List (Finset E)),
     Fintype.card X ≤ 2 ^ n → 1 ≤ nb → IsRb (beta n (Fintype.card E) nb) rb → IsTb (Fintype.card E) nb rb tb → IsFamily nb Ω Γ →
     Reached V nb (beta n (Fintype.card E) nb) rb tb Ω Γ L → (L' = L ∨ (0 < Xsum V nb L ∧ ∃ u ∈ Ω, L' = L ++ [Γ u])) →
-    L'.length ≤ rb ∧ (∀ Λ ∈ L', nb * #Λ ≤ 16 * Fintype.card E) ∧ ∀ e : E, load L' e ≤ tb + 2
+    L'.length ≤ rb ∧ (∀ Λ ∈ L', nb * #Λ ≤ 48 * Fintype.card E) ∧ ∀ e : E, load L' e ≤ tb + 2
 
 end StepChoice
 

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): give the network the occurrence bound of Calabro's thresholds for k ≤ 3.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -68,7 +69,7 @@ theorem lowerDR (hL : StLowerD) {k K n s C₀ : ℕ} (hβ1 : 1 ≤ betaU k s) (h
 
 theorem sbMax_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : sbMax Δ ≤ sbMax Δ' := by
   unfold sbMax
-  exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 (Net.scaleD_mono h)))
+  exact Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) (Nat.clog_mono_right 2 (Nat.mul_le_mul_left 2 (Net.scaleD_mono h)))
 
 theorem objMax_mono (n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : objMax n Δ ≤ objMax n Δ' := by
   unfold objMax

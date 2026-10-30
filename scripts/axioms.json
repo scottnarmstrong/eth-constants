@@ -52,6 +52,10 @@
     "StepSparsify.lcCal_le_betaD",
     "ETHConstants.SATNeed.betaD_three_four",
     "ETHConstants.SAT.level_eight_coefficient_lt",
-    "ETHConstants.SAT.selected_at_target"
+    "ETHConstants.SAT.selected_at_target",
+    "VariableBound.Amplify.odd_triple",
+    "VariableBound.Amplify.triple_bounds",
+    "VariableBound.Fld.famAmpD_isFamily",
+    "VariableBound.Fld.famAmpD_poly"
   ]
 }

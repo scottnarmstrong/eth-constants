@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -42,7 +44,7 @@ def loadSum (m : ℕ) (L : List (List ℕ)) : ℕ := ((List.range m).map fun E =
 /-- The numerator of Υ(𝓛) over the denominator 3^r·2^(β−1)·2^t̄·(15n̄)^(r̄−r), for a list 𝓛 of r ≤
 r̄ checks with X(𝓛) = x. -/
 def upsNum (m nb β rb tb : ℕ) (x : ℤ) (L : List (List ℕ)) : ℤ :=
-  4 ^ L.length * 2 ^ tb * (15 * nb) ^ (rb - L.length) * x + 3 ^ L.length * 2 ^ (β - 1) * (15 * nb + 16) ^ (rb - L.length) * loadSum m L
+  16 ^ L.length * 2 ^ tb * (15 * nb) ^ (rb - L.length) * x + 9 ^ L.length * 2 ^ (β - 1) * (15 * nb + 48) ^ (rb - L.length) * loadSum m L
 
 /-- The first member of the list with the smallest key; the default [] on the empty list. -/
 def argminD (key : List ℕ → ℤ) (fam : List (List ℕ)) : List ℕ :=
@@ -59,10 +61,10 @@ def searchD (pad : U) (evX : List (List ℕ) → ℤ) (fam : List (List ℕ)) (m
   (List.range rb).foldl (fun L _ => cap pad [] (roundD evX fam m nb β rb tb L)) (cap pad [] [])
 
 /-- The conditions of Step 2 of Appendix D on a list of checks, here given by numbers: r ≤ r̄
-checks, each an increasing list of at most s̄ = 16m/n̄ numbers below m, and load(E) ≤ t̄ + 2 for
+checks, each an increasing list of at most s̄ = 48m/n̄ numbers below m, and load(E) ≤ t̄ + 2 for
 every clause E. -/
 def StructD (m nb rb tb : ℕ) (L : List (List ℕ)) : Prop :=
-  L.length ≤ rb ∧ (∀ l ∈ L, l.Pairwise (· < ·) ∧ (∀ E ∈ l, E < m) ∧ nb * l.length ≤ 16 * m) ∧ ∀ E < m, (L.filter fun l => l.contains E).length ≤ tb + 2
+  L.length ≤ rb ∧ (∀ l ∈ L, l.Pairwise (· < ·) ∧ (∀ E ∈ l, E < m) ∧ nb * l.length ≤ 48 * m) ∧ ∀ E < m, (L.filter fun l => l.contains E).length ≤ tb + 2
 
 /-- The search is right. X has at most 2^n elements; β, r̄, t̄ are the parameters of «Setting and
 parameters» in Appendix D, for m clauses and n̄ ≥ 1; the candidates are increasing lists of numbers

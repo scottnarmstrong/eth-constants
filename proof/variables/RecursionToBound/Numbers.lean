@@ -5,6 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 Modified in eth-constants (2026): bound the marks by 9n when Δ ≥ 2^10 and 8n when Δ ≥ 2^21, instead of 14n.
 Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Also modified in eth-constants (2026): account for the larger XOR parity checks.
 -/
 module
 
@@ -105,7 +106,7 @@ theorem LD_mono {Δ Δ' : ℕ} (h : Δ ≤ Δ') : LD Δ ≤ LD Δ' := Nat.clog_m
 /-- The bound on the number of objects grows with Δ. -/
 theorem objMax_mono (n : ℕ) {Δ Δ' : ℕ} (h : Δ ≤ Δ') : objMax n Δ ≤ objMax n Δ' := by
   unfold objMax sbMax
-  exact Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) (LD_mono (VariableBound.Net.scaleD_mono h)))) (Nat.mul_le_mul_right n h)
+  exact Nat.add_le_add (Nat.mul_le_mul_left _ (Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) (LD_mono (VariableBound.Net.scaleD_mono h)))) (Nat.mul_le_mul_right n h)
 
 /-- The bounds on the total, on P, on the number of profiles and on the size s̄ of a check grow with
 Δ. -/
@@ -115,7 +116,7 @@ theorem boundsGrowWithDelta : BoundsGrowWithDelta := by
   have hLS := LD_mono (VariableBound.Net.scaleD_mono h)
   have hsb : sbMax Δ ≤ sbMax Δ' := by
     unfold sbMax
-    exact Nat.mul_le_mul (Nat.mul_le_mul_left 32 h) hLS
+    exact Nat.mul_le_mul (Nat.mul_le_mul_left 96 h) hLS
   have htb : tbMax n Δ ≤ tbMax n Δ' := by
     unfold tbMax
     have := Nat.clog_mono_right 2 (Nat.mul_le_mul_right n h)

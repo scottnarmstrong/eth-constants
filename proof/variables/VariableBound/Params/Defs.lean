@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -37,12 +38,12 @@ def nbD (n Δ : ℕ) : ℕ := 2 ^ (((List.range (Nat.log 2 n + 1)).filter fun a 
 n/(128·log(2Δ)) in place of n/log(2Δ). -/
 def scaleD (Δ : ℕ) : ℕ := 2 ^ 127 * Δ ^ 128
 
-/-- r̄: the least j with 3^j·2^β < 4^j, searched below 3β + 2. -/
-def rbD (β : ℕ) : ℕ := ((List.range (3 * β + 2)).filter fun j => decide (¬ 3 ^ j * 2 ^ β < 4 ^ j)).length
+/-- r̄: the least j with 9^j·2^β < 16^j, searched below 3β + 2. -/
+def rbD (β : ℕ) : ℕ := ((List.range (3 * β + 2)).filter fun j => decide (¬ 9 ^ j * 2 ^ β < 16 ^ j)).length
 
-/-- t̄: the least c with m·(15n̄+16)^r̄ ≤ 2^c·(15n̄)^r̄, searched below (number of binary digits of
-m) + r̄ + 1. -/
-def tbD (m nb rb : ℕ) : ℕ := ((List.range (Nat.size m + rb + 1)).filter fun c => decide (¬ m * (15 * nb + 16) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb)).length
+/-- t̄: the least c with m·(15n̄+48)^r̄ ≤ 2^c·(15n̄)^r̄, searched below (number of binary digits of
+m) + 2r̄ + 1. -/
+def tbD (m nb rb : ℕ) : ℕ := ((List.range (Nat.size m + 2 * rb + 1)).filter fun c => decide (¬ m * (15 * nb + 48) ^ rb ≤ 2 ^ c * (15 * nb) ^ rb)).length
 
 /-- The computed parameters are those of the text: n̄ for Δ ≥ 1 and 2Δ ≤ 2^n, and n̄ ≥ 2 for Δ ≥ 1
 and (2Δ)² ≤ 2^n; r̄ for every β; t̄ for n̄ ≥ 2. -/
@@ -53,32 +54,32 @@ def StParamSpec : Prop :=
 /-- The inequalities of the paragraph «Setting and parameters». Each field names its hypotheses; n̄
 is any number with `IsNb n Δ n̄` (n̄ ≥ 2 is not assumed). -/
 structure ParamIneq : Prop where
-  /-- for 2 ≤ Δ and m ≤ Δ·n: m/n̄ < 2Δ·log(2Δ), so s̄ = 16m/n̄ < 32Δ·log(2Δ) -/
+  /-- for 2 ≤ Δ and m ≤ Δ·n: m/n̄ < 2Δ·log(2Δ), and 16m/n̄ < 32Δ·log(2Δ) -/
   sb_lt : ∀ n Δ m nb : ℕ, 2 ≤ Δ → m ≤ Δ * n → IsNb n Δ nb → (m : ℝ) / nb < 2 * Δ * lg (2 * Δ) ∧ 16 * (m : ℝ) / nb < 32 * Δ * lg (2 * Δ)
   /-- for 2 ≤ Δ and m ≤ Δ·n: 3m/(n̄+1) < 6Δ·log(2Δ) ≤ (2Δ)³ -/
   three_m : ∀ n Δ m nb : ℕ, 2 ≤ Δ → m ≤ Δ * n → IsNb n Δ nb → 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * Δ) ∧ 6 * (Δ : ℝ) * lg (2 * Δ) ≤ (2 * Δ) ^ 3
   /-- for 2 ≤ Δ and n̄ < m ≤ Δ·n: β ≤ n + 3(n̄+1)·log(2Δ) + 2 ≤ 4n + 3·log(2Δ) + 2 -/
   beta_le : ∀ n Δ m nb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb →
     (beta n m nb : ℝ) ≤ n + 3 * (nb + 1) * lg (2 * Δ) + 2 ∧ (n : ℝ) + 3 * (nb + 1) * lg (2 * Δ) + 2 ≤ 4 * n + 3 * lg (2 * Δ) + 2
-  /-- for any β and the r̄ of the text (`IsRb β r̄`): r̄ ≤ 2.41·β + 1 -/
-  rb_le : ∀ β rb : ℕ, IsRb β rb → (rb : ℝ) ≤ 2.41 * β + 1
+  /-- for any β and the r̄ of the text (`IsRb β r̄`): r̄ ≤ 1.21·β + 1 -/
+  rb_le : ∀ β rb : ℕ, IsRb β rb → (rb : ℝ) ≤ 1.21 * β + 1
   /-- display (61), for 2 ≤ Δ, n̄ < m ≤ Δ·n, the r̄ of the text and n ≥ 29·log(2Δ) + 19 (in place of
   the text's n ≥ n₀): r̄ ≤ 10n and M ≤ 14n -/
   large : ∀ n Δ m nb rb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n Δ nb → IsRb (beta n m nb) rb → 29 * lg (2 * Δ) + 19 ≤ n →
     rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n
-  /-- for 2 ≤ Δ, m ≤ Δ·n and n̄ chosen for `scaleD Δ`: 16m/n̄ < 32Δ·log(2·scaleD Δ) and
+  /-- for 2 ≤ Δ, m ≤ Δ·n and n̄ chosen for `scaleD Δ`: 48m/n̄ < 96Δ·log(2·scaleD Δ) and
   3m/(n̄+1) < 6Δ·log(2·scaleD Δ) -/
   sb_lt2 : ∀ n Δ m nb : ℕ, 2 ≤ Δ → m ≤ Δ * n → IsNb n (scaleD Δ) nb →
-    16 * (m : ℝ) / nb < 32 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ)
+    48 * (m : ℝ) / nb < 96 * Δ * lg (2 * scaleD Δ) ∧ 3 * (m : ℝ) / (nb + 1) < 6 * Δ * lg (2 * scaleD Δ)
   /-- for 2 ≤ Δ, n̄ < m ≤ Δ·n, n̄ chosen for `scaleD Δ`, the r̄ of the text and n ≥ 256·log(2Δ) + 19:
-  r̄ ≤ 10n, M ≤ 14n, 2M ≤ 9n, and 2M ≤ 7n if Δ ≥ 2^11 -/
+  r̄ ≤ 10n, M ≤ 14n, 2M ≤ 6n, and 2M ≤ 5n if Δ ≥ 2^11 -/
   large_half : ∀ n Δ m nb rb : ℕ, 2 ≤ Δ → nb < m → m ≤ Δ * n → IsNb n (scaleD Δ) nb → IsRb (beta n m nb) rb → 256 * lg (2 * Δ) + 19 ≤ n →
-    rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 9 * n ∧ (2 ^ 11 ≤ Δ → 2 * Mb (beta n m nb) rb ≤ 7 * n)
-  /-- for 2 ≤ Δ and any number r̄ ≤ 10n (as display (61) gives): p·r̄ < 22·log(2Δ) -/
-  p_rb : ∀ n Δ nb rb : ℕ, 2 ≤ Δ → IsNb n Δ nb → rb ≤ 10 * n → ((pp nb : ℚ) : ℝ) * rb < 22 * lg (2 * Δ)
+    rb ≤ 10 * n ∧ Mb (beta n m nb) rb ≤ 14 * n ∧ 2 * Mb (beta n m nb) rb ≤ 6 * n ∧ (2 ^ 11 ≤ Δ → 2 * Mb (beta n m nb) rb ≤ 5 * n)
+  /-- for 2 ≤ Δ and any number r̄ ≤ 10n (as display (61) gives): p·r̄ < 64·log(2Δ) -/
+  p_rb : ∀ n Δ nb rb : ℕ, 2 ≤ Δ → IsNb n Δ nb → rb ≤ 10 * n → ((pp nb : ℚ) : ℝ) * rb < 64 * lg (2 * Δ)
   /-- for 2 ≤ Δ, m ≥ 1, any number r̄ ≤ 10n (as display (61) gives) and the t̄ of the text for this
-  r̄ (`IsTb m n̄ r̄ t̄`): t̄ ≤ log m + 33·log(2Δ) + 1 -/
-  tb_le : ∀ n Δ m nb rb tb : ℕ, 2 ≤ Δ → 1 ≤ m → IsNb n Δ nb → rb ≤ 10 * n → IsTb m nb rb tb → (tb : ℝ) ≤ lg m + 33 * lg (2 * Δ) + 1
+  r̄ (`IsTb m n̄ r̄ t̄`): t̄ ≤ log m + 96·log(2Δ) + 1 -/
+  tb_le : ∀ n Δ m nb rb tb : ℕ, 2 ≤ Δ → 1 ≤ m → IsNb n Δ nb → rb ≤ 10 * n → IsTb m nb rb tb → (tb : ℝ) ≤ lg m + 96 * lg (2 * Δ) + 1
 
 /-- n̄, β, r̄, t̄ can be written in unary in polynomial time, when n, Δ, m, β, n̄, r̄ are given in
 unary (β and r̄ are separate inputs). -/

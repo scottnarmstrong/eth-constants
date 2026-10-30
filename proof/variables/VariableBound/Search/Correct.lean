@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -84,7 +86,7 @@ theorem card_setD (m : ℕ) (l : List ℕ) (h1 : l.Nodup) (h2 : ∀ E ∈ l, E <
 /-! ### Υ as a fraction -/
 
 /-- The denominator of Υ for a list of r checks. -/
-@[expose] def den (nb β rb tb r : ℕ) : ℚ := 3 ^ r * 2 ^ (β - 1) * 2 ^ tb * (15 * nb) ^ (rb - r)
+@[expose] def den (nb β rb tb r : ℕ) : ℚ := 9 ^ r * 2 ^ (β - 1) * 2 ^ tb * (15 * nb) ^ (rb - r)
 
 /-- The denominator is positive, for n̄ ≥ 1. -/
 theorem den_pos (nb β rb tb r : ℕ) (hnb : 1 ≤ nb) : 0 < den nb β rb tb r := by
@@ -97,7 +99,7 @@ theorem ups_eq {X : Type} [Fintype X] (m : ℕ) (V : X → Finset (Fin m)) (nb �
   have h0 : (0 : ℚ) < nb := by exact_mod_cast hnb
   unfold Ups upsNum den pp
   rw [sum_load, length_chksD]
-  have h1 : (1 + 16 / (15 * (nb : ℚ))) = (15 * nb + 16) / (15 * nb) := by field_simp
+  have h1 : (1 + 48 / (15 * (nb : ℚ))) = (15 * nb + 48) / (15 * nb) := by field_simp
   rw [h1, div_pow, div_pow]
   push_cast
   field_simp
@@ -191,7 +193,7 @@ variable {V n nb rb tb fam}
 /-- Under `Hyp`, the bounds of Step 2 on the number of checks, their sizes and the loads pass from
 sets to lists of numbers, for a list of candidates. -/
 theorem structD_of (H : Hyp X m n nb rb tb fam) (L : List (List ℕ)) (hm : ∀ l ∈ L, l ∈ fam)
-    (h : (chksD m L).length ≤ rb ∧ (∀ Λ ∈ chksD m L, nb * #Λ ≤ 16 * Fintype.card (Fin m)) ∧ ∀ e : Fin m, load (chksD m L) e ≤ tb + 2) :
+    (h : (chksD m L).length ≤ rb ∧ (∀ Λ ∈ chksD m L, nb * #Λ ≤ 48 * Fintype.card (Fin m)) ∧ ∀ e : Fin m, load (chksD m L) e ≤ tb + 2) :
     StructD m nb rb tb L := by
   refine ⟨by simpa [length_chksD] using h.1, fun l hl => ?_, fun E hE => ?_⟩
   · obtain ⟨h1, h2⟩ := H.hinc l (hm l hl)

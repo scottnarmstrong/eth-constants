@@ -50,8 +50,8 @@ The function choosing the initial parameter now uses
 
 The budget function `UbD` of the variable route charges the marks of the
 parity checks through a bound on their number that is smaller than the
-upstream `14n`. The current bound, `2M ≤ 9n`, is described under the
-inclusion–exclusion cutoff below. The program's counting steps are unchanged
+upstream `14n`. That step was strengthened by the inclusion–exclusion cutoff and XOR
+amplification described below. The program's counting steps are unchanged
 by this step; its budget and the plan guard that uses it change, and the
 upstream theorems are re-proved for the revised budget. Modified files carry a
 modification notice.
@@ -89,6 +89,8 @@ plan's guard are unchanged. (The tiered mark bound of this step was later replac
 
 ## Inclusion–exclusion cutoff: 9 more existing proof files
 
+The following bounds describe the stage before XOR amplification.
+
 The variable route computes `n̄` for `scaleD Δ = 2^127·Δ^128` in place of `Δ`,
 so that `n̄` is about `n/(128 log₂ 2Δ)`; then `2M ≤ 9n` for every `Δ`, and
 `2M ≤ 7n` for `Δ ≥ 2^11` (`VariableBound.Ineq.large_half`). The budget charges
@@ -106,6 +108,51 @@ Besides files already listed above, these change:
 - [`proof/variables/VariableBound/Top/ArithNat.lean`](../proof/variables/VariableBound/Top/ArithNat.lean)
 - [`proof/variables/VariableBound/Top/ArithTop.lean`](../proof/variables/VariableBound/Top/ArithTop.lean)
 - [`proof/variables/VariableBound/Top/Correct.lean`](../proof/variables/VariableBound/Top/Correct.lean)
+
+## Threefold XOR amplification
+
+The variable route now lists all triples of the original family and XORs each
+triple. This changes the executable check-selection algorithm, its potential,
+its check count, and its network bounds. Detection rises from `1/4` to `7/16`;
+`r̄ ≤ 1.21β+1`, and `2M ≤ 6n` globally or `2M ≤ 5n` for `Δ ≥ 2^11`.
+The check-size and incidence bounds triple. The family has fewer than
+`(32m)^12` members, and its polynomial-time certificate is re-proved.
+
+In `AppVariablesStatement`, the unchanged original family specification is
+renamed `BaseFamily`; the new `IsFamily` states the amplified bounds. Lemma 13
+continues to prove `BaseFamily`. The new modules
+[`Family/Amplify.lean`](../proof/variables/VariableBound/Family/Amplify.lean) and
+[`Field/Amplify.lean`](../proof/variables/VariableBound/Field/Amplify.lean)
+prove amplification and its executable implementation. This is a new argument,
+not a claim that the paper already states the stronger lemma.
+
+The following existing proof files change in this step (some also appear above):
+
+- [`proof/variables/RecursionToBound/Numbers.lean`](../proof/variables/RecursionToBound/Numbers.lean)
+- [`proof/statements/AppVariablesStatement.lean`](../proof/statements/AppVariablesStatement.lean)
+- [`proof/variables/RecursionWithPieces/Main.lean`](../proof/variables/RecursionWithPieces/Main.lean)
+- [`proof/variables/VariableBound/Count/Cert.lean`](../proof/variables/VariableBound/Count/Cert.lean)
+- [`proof/variables/VariableBound/Count/Correct.lean`](../proof/variables/VariableBound/Count/Correct.lean)
+- [`proof/variables/VariableBound/Count/Defs.lean`](../proof/variables/VariableBound/Count/Defs.lean)
+- [`proof/variables/VariableBound/Field/Defs.lean`](../proof/variables/VariableBound/Field/Defs.lean)
+- [`proof/variables/VariableBound/Field/Family.lean`](../proof/variables/VariableBound/Field/Family.lean)
+- [`proof/variables/VariableBound/Field/Transfer.lean`](../proof/variables/VariableBound/Field/Transfer.lean)
+- [`proof/variables/VariableBound/MainPrinted.lean`](../proof/variables/VariableBound/MainPrinted.lean)
+- [`proof/variables/VariableBound/Net/CertEv.lean`](../proof/variables/VariableBound/Net/CertEv.lean)
+- [`proof/variables/VariableBound/Net/Defs.lean`](../proof/variables/VariableBound/Net/Defs.lean)
+- [`proof/variables/VariableBound/Net/Fit.lean`](../proof/variables/VariableBound/Net/Fit.lean)
+- [`proof/variables/VariableBound/Net/SizeU.lean`](../proof/variables/VariableBound/Net/SizeU.lean)
+- [`proof/variables/VariableBound/Params/Cert.lean`](../proof/variables/VariableBound/Params/Cert.lean)
+- [`proof/variables/VariableBound/Params/Defs.lean`](../proof/variables/VariableBound/Params/Defs.lean)
+- [`proof/variables/VariableBound/Params/Ineq.lean`](../proof/variables/VariableBound/Params/Ineq.lean)
+- [`proof/variables/VariableBound/Params/Spec.lean`](../proof/variables/VariableBound/Params/Spec.lean)
+- [`proof/variables/VariableBound/Search/Cert.lean`](../proof/variables/VariableBound/Search/Cert.lean)
+- [`proof/variables/VariableBound/Search/Correct.lean`](../proof/variables/VariableBound/Search/Correct.lean)
+- [`proof/variables/VariableBound/Search/Defs.lean`](../proof/variables/VariableBound/Search/Defs.lean)
+- [`proof/variables/VariableBound/StepChoice.lean`](../proof/variables/VariableBound/StepChoice.lean)
+- [`proof/variables/VariableBound/Top/ArithDefs.lean`](../proof/variables/VariableBound/Top/ArithDefs.lean)
+- [`proof/variables/VariableBound/Top/ArithNat.lean`](../proof/variables/VariableBound/Top/ArithNat.lean)
+- [`proof/variables/VariableBound/Top/ArithNeed.lean`](../proof/variables/VariableBound/Top/ArithNeed.lean)
 
 ## Additions
 

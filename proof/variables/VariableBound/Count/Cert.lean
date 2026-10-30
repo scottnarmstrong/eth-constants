@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -18,7 +19,7 @@ Proves `VariableBound.StCertCountD`: the program `countD` is polynomial-time (`P
 jointly in the width k, the index of the clique solver, n and Δ (k, n, Δ in unary) and the formula,
 for a polynomial-time clique solver (`S.Poly`), given the certificates of
 its parts: one evaluation by networks (`Net.StCertEvD`), the search (`StCertSearchD`), the listed
-family of Lemma 13 (`Fld.StCertFamD`) and the parameters (`StCertParam`). The proof is a
+family of Lemma 13 (`Fld.StCertFamAmpD`) and the parameters (`StCertParam`). The proof is a
 composition. Two
 closure lemmas come first: the remainder of an integer modulo a power of two, and the logarithm of a
 number given in unary; they are copies of lemmas of
@@ -91,7 +92,7 @@ theorem evF_polyT (hEv : Net.StCertEvD) (hP : S.Poly) {k n Δ nb M : α → ℕ}
 
 /-- The count is polynomial-time, given the four certificates and a polynomial-time solver; k, n, Δ
 in unary. -/
-theorem countD_polyT (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCertFamD) (hPar : StCertParam) (hP : S.Poly) {k n Δ : α → ℕ} {pad : α → U} {i : α → Idx}
+theorem countD_polyT (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCertFamAmpD) (hPar : StCertParam) (hP : S.Poly) {k n Δ : α → ℕ} {pad : α → U} {i : α → Idx}
     {ψ : α → Fml} (hk : Unary k) (hn : Unary n) (hΔ : Unary Δ) (hp : PolyT pad) (hi : PolyT i) (hψ : PolyT ψ) :
     PolyT fun x => countD S (k x) (pad x) (i x) (n x) (Δ x) (ψ x) := by
   have hm : Unary fun x => (ψ x).length := Unary.of_length hψ
@@ -103,7 +104,7 @@ theorem countD_polyT (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCe
   have hM : PolyT fun x => Mb (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x)))) (rbD (beta (n x) (ψ x).length (nbD (n x) (scaleD (Δ x))))) := by
     unfold Mb
     exact PolyT.sub (PolyT.add hrb.poly hβ.poly) (PolyT.const 1)
-  have hfam : PolyT fun x => Fld.famD (ψ x).length (Nat.log 2 (nbD (n x) (scaleD (Δ x)))) := hFam α _ _ hm (log_unary hnb)
+  have hfam : PolyT fun x => Fld.famAmpD (ψ x).length (Nat.log 2 (nbD (n x) (scaleD (Δ x)))) := hFam α _ _ hm (log_unary hnb)
   have hX : PolyT fun p : α × List (List ℕ) => evX S (k p.1) (pad p.1) (i p.1) (n p.1) (Δ p.1) (nbD (n p.1) (scaleD (Δ p.1)))
       (Mb (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1)))) (rbD (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1))))))
       (beta (n p.1) (ψ p.1).length (nbD (n p.1) (scaleD (Δ p.1)))) (ψ p.1, p.2) :=
@@ -126,9 +127,9 @@ open Groundwork Groundwork.Prog PaddedDescent.F
 /-- Steps 1 to 4 of Appendix D: for every polynomial-time clique solver, the count of one sparse
 formula is polynomial-time, jointly in its input, given the certificates of one evaluation by
 networks (`Net.StCertEvD`), of the search
-(`StCertSearchD`), of the listed family of Lemma 13 (`Fld.StCertFamD`) and of the parameters
+(`StCertSearchD`), of the listed family of Lemma 13 (`Fld.StCertFamAmpD`) and of the parameters
 (`StCertParam`). -/
-theorem stCertCountD (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCertFamD) (hPar : StCertParam) : StCertCountD := by
+theorem stCertCountD (hEv : Net.StCertEvD) (hS : StCertSearchD) (hFam : Fld.StCertFamAmpD) (hPar : StCertParam) : StCertCountD := by
   intro Idx _ S hP
   exact Count.countD_polyT hEv hS hFam hPar hP (k := fun x : U × U × Idx × (U × U) × Fml => x.1.length) (Unary.of_length PolyT.id'.fst)
     (Unary.of_length PolyT.id'.snd.snd.snd.fst.fst) (Unary.of_length PolyT.id'.snd.snd.snd.fst.snd) PolyT.id'.snd.fst PolyT.id'.snd.snd.fst PolyT.id'.snd.snd.snd.snd

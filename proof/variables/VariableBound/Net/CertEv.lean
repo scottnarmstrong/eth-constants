@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -55,30 +56,30 @@ theorem PbD_eq (K n Δ : ℕ) :
 
 /-! ### The bounds are given in unary -/
 
-/-- `scaleD Δ` = 2^31·Δ^32 is polynomial-time if Δ is. -/
+/-- `scaleD Δ` = 2^127·Δ^128 is polynomial-time if Δ is. -/
 theorem scaleD_polyT {Δ : α → ℕ} (hΔ : PolyT Δ) : PolyT fun x => scaleD (Δ x) :=
   (PolyT.const (2 ^ 127)).mul (PolyT.pow_const hΔ 128)
 
 /-- The bound for t̄ is given in unary if n and Δ are polynomial-time. -/
 theorem tbMax_unary {n Δ : α → ℕ} (hn : PolyT n) (hΔ : PolyT Δ) : Unary fun x => tbMax (n x) (Δ x) :=
-  ((clog_unary (hΔ.mul hn)).add ((Unary.const 33).mul (LD_unary (scaleD_polyT hΔ)))).add (Unary.const 1)
+  ((clog_unary (hΔ.mul hn)).add ((Unary.const 96).mul (LD_unary (scaleD_polyT hΔ)))).add (Unary.const 1)
 
 /-- The bound for s̄ is given in unary if Δ is. -/
 theorem sbMax_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => sbMax (Δ x) :=
-  ((Unary.const 32).mul hΔ).mul (LD_unary (scaleD_polyT hΔ.poly))
+  ((Unary.const 96).mul hΔ).mul (LD_unary (scaleD_polyT hΔ.poly))
 
 /-- The bound for the number I + m of objects is given in unary if n and Δ are. -/
 theorem objMax_unary {n Δ : α → ℕ} (hn : Unary n) (hΔ : Unary Δ) : Unary fun x => objMax (n x) (Δ x) :=
   (((Unary.const 10).mul hn).mul (sbMax_unary hΔ)).add (hΔ.mul hn)
 
-/-- ⌈log(96Δ·⌈log(2·scaleD Δ)⌉)⌉ is given in unary if Δ is polynomial-time. -/
+/-- ⌈log(288Δ·⌈log(2·scaleD Δ)⌉)⌉ is given in unary if Δ is polynomial-time. -/
 theorem lgD_unary {Δ : α → ℕ} (hΔ : PolyT Δ) : Unary fun x => lgD (Δ x) :=
-  clog_unary (((PolyT.const 96).mul hΔ).mul (LD_unary (scaleD_polyT hΔ)).poly)
+  clog_unary (((PolyT.const 288).mul hΔ).mul (LD_unary (scaleD_polyT hΔ)).poly)
 
 /-- The bound on the bits of the marks per variable is given in unary if Δ is. -/
 theorem markH_unary {Δ : α → ℕ} (hΔ : Unary Δ) : Unary fun x => markH (Δ x) :=
-  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 7).mul (lgD_unary hΔ.poly))
-    ((Unary.const 9).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 11))).poly))
+  ClauseBound.Alg.CertGridG.unary_max ((Unary.const 5).mul (lgD_unary hΔ.poly))
+    ((Unary.const 6).mul (lgD_unary (unary_min_right hΔ.poly (Unary.const (2 ^ 11))).poly))
 
 /-- The bound on the total U in «The total» of Step 3, with the logarithms rounded up, is given in
 unary if k, K, n and Δ are. -/

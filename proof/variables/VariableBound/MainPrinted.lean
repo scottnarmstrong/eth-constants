@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -15,7 +17,7 @@ import VariableBound.Top.Time
 import VariableBound.Top.Defs
 import VariableBound.StepParity
 import VariableBound.Family.Main
-import VariableBound.Field.Family
+import VariableBound.Field.Amplify
 import VariableBound.Field.Cert
 import VariableBound.Params.Spec
 import VariableBound.Params.Ineq
@@ -65,7 +67,7 @@ namespace VariableBound
 open Groundwork PaddedDescent PaddedDescent.F CountKSat CountKSatRate ClauseBound.Alg ClauseBound.Both ClauseBound.ParityChecks UniformInK VariableBound.Decide
 
 /-- The count of one sparse formula is polynomial-time in the pad, jointly in the width. -/
-theorem certCountDc : StCertCountD := stCertCountD Net.Main.certEvD stCertSearchD Fld.Cert.stCertFamD stCertParam
+theorem certCountDc : StCertCountD := stCertCountD Net.Main.certEvD stCertSearchD Fld.famAmpD_poly stCertParam
 
 /-- For k ≥ 1 and a k-CNF: the exponent `eBD` is at most `eD`, and, if all variables occur and there
 is a clause, at most the exponent of the algorithm for the bound in m. -/

@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -100,10 +102,36 @@ the members, indexed by their places in the list, have (a), (b), (c). -/
 def StFamD : Prop := ∀ m a : ℕ, 1 ≤ a → 2 ^ a ≤ m →
   famD m a ≠ [] ∧ (famD m a).length < (32 * m) ^ 4 ∧
   (∀ l ∈ famD m a, l.Pairwise (· < ·) ∧ l.Nodup ∧ ∀ E ∈ l, E < m) ∧
-  AppVariables.IsFamily (2 ^ a) (Finset.univ : Finset (Fin (famD m a).length)) fun i => setD m ((famD m a).get i)
+  AppVariables.BaseFamily (2 ^ a) (Finset.univ : Finset (Fin (famD m a).length)) fun i => setD m ((famD m a).get i)
 
 /-- Lemma 13 (Family of checks), second sentence: the list is computed in polynomial time, jointly
 in m and a, both given in unary. -/
 def StCertFamD : Prop := ∀ (α : Type) [Enc α] (m a : α → ℕ), Unary m → Unary a → PolyT fun x => famD (m x) (a x)
 
+end VariableBound.Fld
+
+@[expose] public section
+namespace VariableBound.Fld
+open Groundwork
+
+/-- Symmetric difference of three checks, as an increasing list. -/
+def xorChecks (m : ℕ) (p : List ℕ × List ℕ × List ℕ) : List ℕ :=
+  (List.range m).filter fun E => xor (p.1.contains E) (xor (p.2.1.contains E) (p.2.2.contains E))
+
+/-- The family of all triple XORs of the original field-based checks. -/
+def famAmpD (m a : ℕ) : List (List ℕ) :=
+  let f := famD m a
+  (List.range f.length ×ˢ List.range f.length ×ˢ List.range f.length).map fun i =>
+    xorChecks m (f.getD i.1 [], f.getD i.2.1 [], f.getD i.2.2 [])
+
+/-- The amplified family is nonempty, polynomial in size, ordered, and detects at least 7/16. -/
+def StFamAmpD : Prop := ∀ m a : ℕ, 1 ≤ a → 2 ^ a ≤ m →
+  famAmpD m a ≠ [] ∧ (famAmpD m a).length < (32 * m)^12 ∧
+  (∀ l ∈ famAmpD m a, l.Pairwise (· < ·) ∧ l.Nodup ∧ ∀ E ∈ l, E < m) ∧
+  AppVariables.IsFamily (2^a) (Finset.univ : Finset (Fin (famAmpD m a).length))
+    fun i => setD m ((famAmpD m a).get i)
+
+/-- Polynomial-time enumeration of the amplified family, with m and a in unary. -/
+def StCertFamAmpD : Prop := ∀ (α : Type) [Enc α] (m a : α → ℕ), Unary m → Unary a →
+  PolyT fun x => famAmpD (m x) (a x)
 end VariableBound.Fld

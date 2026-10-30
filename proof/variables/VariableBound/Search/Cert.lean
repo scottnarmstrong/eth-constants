@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -34,8 +36,8 @@ variable {α : Type} [Enc α]
 
 /-- `upsNum` with the powers taken in the natural numbers. -/
 theorem upsNum_eq (m nb β rb tb : ℕ) (x : ℤ) (L : List (List ℕ)) :
-    upsNum m nb β rb tb x L = ((4 ^ L.length * 2 ^ tb * (15 * nb) ^ (rb - L.length) : ℕ) : ℤ) * x +
-      ((3 ^ L.length * 2 ^ (β - 1) * (15 * nb + 16) ^ (rb - L.length) * loadSum m L : ℕ) : ℤ) := by
+    upsNum m nb β rb tb x L = ((16 ^ L.length * 2 ^ tb * (15 * nb) ^ (rb - L.length) : ℕ) : ℤ) * x +
+      ((9 ^ L.length * 2 ^ (β - 1) * (15 * nb + 48) ^ (rb - L.length) * loadSum m L : ℕ) : ℤ) := by
   unfold upsNum
   push_cast
   rfl

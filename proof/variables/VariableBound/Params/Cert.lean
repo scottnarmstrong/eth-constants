@@ -2,6 +2,8 @@
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
+
+Modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -71,8 +73,8 @@ theorem beta_unary {n m nb : α → ℕ} (hn : Unary n) (hm : PolyT m) (hnb : Un
 theorem rbD_unary {β : α → ℕ} (hβ : Unary β) : Unary fun x => rbD (β x) := by
   have hN : Unary fun x => 3 * β x + 2 := ((Unary.const 3).mul hβ).add (Unary.const 2)
   have hmin : Unary fun p : α × ℕ => min p.2 (3 * β p.1 + 2) := unary_min_right PolyT.id'.snd (hN.comp PolyT.id'.fst)
-  exact Unary.of_length (filter_range_polyT (f := fun x j => decide (¬ 3 ^ j * 2 ^ β x < 4 ^ j)) hN
-    (PolyT.decide_not (PolyT.decide_lt ((PolyT.pow_unary (PolyT.const 3) hmin).mul (PolyT.two_pow (hβ.comp PolyT.id'.fst))) (PolyT.pow_unary (PolyT.const 4) hmin))))
+  exact Unary.of_length (filter_range_polyT (f := fun x j => decide (¬ 9 ^ j * 2 ^ β x < 16 ^ j)) hN
+    (PolyT.decide_not (PolyT.decide_lt ((PolyT.pow_unary (PolyT.const 9) hmin).mul (PolyT.two_pow (hβ.comp PolyT.id'.fst))) (PolyT.pow_unary (PolyT.const 16) hmin))))
 
 /-- The number of binary digits of m is given in unary if m is polynomial-time. -/
 theorem size_unary {m : α → ℕ} (hm : PolyT m) : Unary fun x => Nat.size (m x) :=
@@ -80,12 +82,12 @@ theorem size_unary {m : α → ℕ} (hm : PolyT m) : Unary fun x => Nat.size (m 
 
 /-- t̄ is given in unary if r̄ is and m and n̄ are polynomial-time. -/
 theorem tbD_unary {m nb rb : α → ℕ} (hm : PolyT m) (hnb : PolyT nb) (hrb : Unary rb) : Unary fun x => tbD (m x) (nb x) (rb x) := by
-  have hN : Unary fun x => Nat.size (m x) + rb x + 1 := ((size_unary hm).add hrb).add (Unary.const 1)
-  have hmin : Unary fun p : α × ℕ => min p.2 (Nat.size (m p.1) + rb p.1 + 1) := unary_min_right PolyT.id'.snd (hN.comp PolyT.id'.fst)
+  have hN : Unary fun x => Nat.size (m x) + 2 * rb x + 1 := ((size_unary hm).add ((Unary.const 2).mul hrb)).add (Unary.const 1)
+  have hmin : Unary fun p : α × ℕ => min p.2 (Nat.size (m p.1) + 2 * rb p.1 + 1) := unary_min_right PolyT.id'.snd (hN.comp PolyT.id'.fst)
   have hnb' : PolyT fun p : α × ℕ => 15 * nb p.1 := (PolyT.const 15).mul (PolyT.comp hnb PolyT.id'.fst)
   have hrb' : Unary fun p : α × ℕ => rb p.1 := hrb.comp PolyT.id'.fst
-  exact Unary.of_length (filter_range_polyT (f := fun x c => decide (¬ m x * (15 * nb x + 16) ^ rb x ≤ 2 ^ c * (15 * nb x) ^ rb x)) hN
-    (PolyT.decide_not (PolyT.decide_le ((PolyT.comp hm PolyT.id'.fst).mul (PolyT.pow_unary (hnb'.add (PolyT.const 16)) hrb'))
+  exact Unary.of_length (filter_range_polyT (f := fun x c => decide (¬ m x * (15 * nb x + 48) ^ rb x ≤ 2 ^ c * (15 * nb x) ^ rb x)) hN
+    (PolyT.decide_not (PolyT.decide_le ((PolyT.comp hm PolyT.id'.fst).mul (PolyT.pow_unary (hnb'.add (PolyT.const 48)) hrb'))
       ((PolyT.two_pow hmin).mul (PolyT.pow_unary hnb' hrb')))))
 
 end Cert

@@ -3,7 +3,8 @@ Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 SPDX-License-Identifier: Apache-2.0
 
-Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 3.5n instead of 14n.
+Modified in eth-constants (2026): choose n̄ about n/(128·log(2Δ)) and bound the marks by 2.5n instead of 14n.
+Also modified in eth-constants (2026): threefold XOR parity checks and their explicit cost bounds.
 -/
 module
 
@@ -24,14 +25,14 @@ for the number B of bits of the values, for all networks of all lists of checks 
 These bounds
 (`UbD`, `PbD`, `BbD`) are the right side of the bound on U displayed in Step 3 of Appendix D, and P =
 ⌈2P₀⌉ and B = (k + 1)M + 1 of that Step, with the logarithms rounded up and with r̄ ≤ 10n, M ≤ 14n,
-2M ≤ 9n, s̄ < 32Δ·log(2·scaleD Δ) and t̄ ≤ log m + 33·log(2·scaleD Δ) + 1 put in. Proved here:
+2M ≤ 6n, s̄ < 96Δ·log(2·scaleD Δ) and t̄ ≤ log m + 96·log(2·scaleD Δ) + 1 put in. Proved here:
 `stTbMax` (the bound for t̄), `stFit` (a list with the three bounds displayed at the end of Step 2,
 on r, on |Λ_j| and on load(E), is fit for an evaluation), `stNPrMax` (the number of profiles),
 `stBounds` (the bounds in closed form) and `stSize` (every network of an
 admissible profile is within the bounds, the case m ≤ n̄ included). Arithmetic and gluing only: the
 bound on U before display (61) (`StU`), «The parameters» (`StSized`), the case m ≤ n̄ (`StSmall`), the
 bound on gP displayed in «The parameters» (`StP`),
-the count of profiles (`StNPr`) and s̄ < 32Δ·log(2Δ) (`ParamIneq`) come in as hypotheses;
+the count of profiles (`StNPr`) and s̄ < 96Δ·log(2Δ) (`ParamIneq`) come in as hypotheses;
 proof/variables/VariableBound/Net/Main.lean discharges them. -/
 
 public section
@@ -69,8 +70,8 @@ theorem lg_two_mul_le (Δ : ℕ) : lg (2 * Δ) ≤ LD Δ := by
   push_cast at h
   exact h
 
-/-- ⌈log(96Δ·⌈log(2Δ)⌉)⌉ ≤ 2·⌈log(2Δ)⌉ + 5 for Δ ≥ 2. -/
-theorem clog_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : Nat.clog 2 (96 * Δ * LD Δ) ≤ 2 * LD Δ + 5 := by
+/-- ⌈log(288Δ·⌈log(2Δ)⌉)⌉ ≤ 2·⌈log(2Δ)⌉ + 7 for Δ ≥ 2. -/
+theorem clog_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : Nat.clog 2 (288 * Δ * LD Δ) ≤ 2 * LD Δ + 7 := by
   refine Nat.clog_le_of_le_pow ?_
   have h1 := two_mul_le Δ
   have hL := two_le_LD hΔ
@@ -78,8 +79,8 @@ theorem clog_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : Nat.clog 2 (96 * Δ * LD Δ) ≤ 2
   obtain ⟨L', rfl⟩ : ∃ L', L = L' + 1 := ⟨L - 1, by omega⟩
   have h2 : Δ ≤ 2 ^ L' := by rw [pow_succ] at h1; omega
   have h3 : L' + 1 ≤ 2 ^ L' := Nat.lt_two_pow_self
-  calc 96 * Δ * (L' + 1) ≤ 128 * 2 ^ L' * 2 ^ L' := Nat.mul_le_mul (Nat.mul_le_mul (by norm_num) h2) h3
-    _ = 2 ^ (2 * (L' + 1) + 5) := by ring
+  calc 288 * Δ * (L' + 1) ≤ 512 * 2 ^ L' * 2 ^ L' := Nat.mul_le_mul (Nat.mul_le_mul (by norm_num) h2) h3
+    _ = 2 ^ (2 * (L' + 1) + 7) := by ring
 
 /-- ⌈log(2·scaleD Δ)⌉ ≤ 128·⌈log(2Δ)⌉. -/
 theorem LD_scaleD_le (Δ : ℕ) : LD (scaleD Δ) ≤ 128 * LD Δ := by
@@ -89,8 +90,8 @@ theorem LD_scaleD_le (Δ : ℕ) : LD (scaleD Δ) ≤ 128 * LD Δ := by
   calc (2 * Δ) ^ 128 ≤ (2 ^ LD Δ) ^ 128 := Nat.pow_le_pow_left (two_mul_le Δ) 128
     _ = 2 ^ (128 * LD Δ) := by rw [← pow_mul, Nat.mul_comm]
 
-/-- `lgD Δ` ≤ 2·⌈log(2Δ)⌉ + 12 for Δ ≥ 2. -/
-theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 12 := by
+/-- `lgD Δ` ≤ 2·⌈log(2Δ)⌉ + 14 for Δ ≥ 2. -/
+theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 14 := by
   refine Nat.clog_le_of_le_pow ?_
   have h1 := two_mul_le Δ
   have hL := two_le_LD hΔ
@@ -100,10 +101,10 @@ theorem lgD_le {Δ : ℕ} (hΔ : 2 ≤ Δ) : lgD Δ ≤ 2 * LD Δ + 12 := by
   obtain ⟨L', rfl⟩ : ∃ L', L = L' + 1 := ⟨L - 1, by omega⟩
   have h2 : Δ ≤ 2 ^ L' := by rw [pow_succ] at h1; omega
   have h3 : L' + 1 ≤ 2 ^ L' := Nat.lt_two_pow_self
-  calc 96 * Δ * S ≤ 96 * 2 ^ L' * (128 * (L' + 1)) := Nat.mul_le_mul (Nat.mul_le_mul_left _ h2) hS
-    _ ≤ 96 * 2 ^ L' * (128 * 2 ^ L') := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
-    _ ≤ 2 ^ (2 * (L' + 1) + 12) := by
-      have : 2 ^ (2 * (L' + 1) + 12) = 16384 * (2 ^ L' * 2 ^ L') := by ring
+  calc 288 * Δ * S ≤ 288 * 2 ^ L' * (128 * (L' + 1)) := Nat.mul_le_mul (Nat.mul_le_mul_left _ h2) hS
+    _ ≤ 288 * 2 ^ L' * (128 * 2 ^ L') := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h3)
+    _ ≤ 2 ^ (2 * (L' + 1) + 14) := by
+      have : 2 ^ (2 * (L' + 1) + 14) = 65536 * (2 ^ L' * 2 ^ L') := by ring
       rw [this]
       nlinarith [Nat.zero_le (2 ^ L' * 2 ^ L')]
 
@@ -124,19 +125,19 @@ theorem n_lt {n Δ nb : ℕ} (h : AppVariables.IsNb n Δ nb) : n < LD Δ * (2 * 
   rw [pow_mul 2]
   exact Nat.pow_le_pow_left (two_mul_le Δ) _
 
-/-- A check of at most s̄ = 16m/n̄ clauses, with m ≤ Δn and n̄ chosen for `scaleD Δ`, has at most
-32Δ·⌈log(2·scaleD Δ)⌉ clauses. -/
-theorem row_le {n Δ nb m l : ℕ} (h : AppVariables.IsNb n (scaleD Δ) nb) (hm : m ≤ Δ * n) (hl : nb * l ≤ 16 * m) : l ≤ sbMax Δ := by
+/-- A check of at most s̄ = 48m/n̄ clauses, with m ≤ Δn and n̄ chosen for `scaleD Δ`, has at most
+96Δ·⌈log(2·scaleD Δ)⌉ clauses. -/
+theorem row_le {n Δ nb m l : ℕ} (h : AppVariables.IsNb n (scaleD Δ) nb) (hm : m ≤ Δ * n) (hl : nb * l ≤ 48 * m) : l ≤ sbMax Δ := by
   refine Nat.le_of_mul_le_mul_left ?_ (nb_pos h)
   unfold sbMax
-  calc nb * l ≤ 16 * (Δ * n) := hl.trans (Nat.mul_le_mul_left _ hm)
-    _ ≤ 16 * (Δ * (LD (scaleD Δ) * (2 * nb))) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ (n_lt h).le)
-    _ = nb * (32 * Δ * LD (scaleD Δ)) := by ring
+  calc nb * l ≤ 48 * (Δ * n) := hl.trans (Nat.mul_le_mul_left _ hm)
+    _ ≤ 48 * (Δ * (LD (scaleD Δ) * (2 * nb))) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ (n_lt h).le)
+    _ = nb * (96 * Δ * LD (scaleD Δ)) := by ring
 
 /-! ### The statements -/
 
-/-- «Setting and parameters»: t̄ ≤ log m + 33·log(2·scaleD Δ) + 1 gives t̄ ≤ ⌈log(Δn)⌉ +
-33·⌈log(2·scaleD Δ)⌉ + 1, for 1 ≤ m ≤ Δn. -/
+/-- «Setting and parameters»: t̄ ≤ log m + 96·log(2·scaleD Δ) + 1 gives t̄ ≤ ⌈log(Δn)⌉ +
+96·⌈log(2·scaleD Δ)⌉ + 1, for 1 ≤ m ≤ Δn. -/
 theorem stTbMax : StTbMax := by
   intro n Δ m tb hm hmΔ h
   have h1 : lg m ≤ Nat.clog 2 (Δ * n) := (lg_mono (by exact_mod_cast hm) (by exact_mod_cast hmΔ)).trans (lg_le_clog (Δ * n))
@@ -182,7 +183,7 @@ theorem stFit : StFit := by
         big := fun h => absurd hle (Nat.not_le.2 h)
         small := fun _ => rfl }
 
-/-- Every check of a list that is fit for an evaluation has at most 32Δ·⌈log(2Δ)⌉ clauses. -/
+/-- Every check of a list that is fit for an evaluation has at most 96Δ·⌈log(2Δ)⌉ clauses. -/
 theorem Fit.row_le {k n Δ nb M : ℕ} {D : Dat} (hF : Fit k n Δ nb M D) : ∀ L ∈ D.2, L.length ≤ sbMax Δ := by
   intro L hL
   rcases Nat.lt_or_ge nb D.1.length with hlt | hle
@@ -213,11 +214,11 @@ theorem stBounds (h : StP) : StBounds := by
     generalize lgD Δ = c at hc hm ⊢
     generalize LD Δ = L at hc hL ⊢
     refine Nat.add_le_add_right ?_ _
-    have h0 : n * μ ≤ 9 * (n * c) := by
-      calc n * μ ≤ n * (9 * c) := Nat.mul_le_mul_left _ hm
-        _ = 9 * (n * c) := by ring
-    have h1 : n * c ≤ n * (2 * L + 12) := Nat.mul_le_mul_left _ hc
-    have e1 : n * (2 * L + 12) = 2 * (n * L) + 12 * n := by ring
+    have h0 : n * μ ≤ 6 * (n * c) := by
+      calc n * μ ≤ n * (6 * c) := Nat.mul_le_mul_left _ hm
+        _ = 6 * (n * c) := by ring
+    have h1 : n * c ≤ n * (2 * L + 14) := Nat.mul_le_mul_left _ hc
+    have e1 : n * (2 * L + 14) = 2 * (n * L) + 14 * n := by ring
     have h2 : n * 2 ≤ n * L := Nat.mul_le_mul_left _ hL
     have h3 : L ≤ n * L := Nat.le_mul_of_pos_left _ hn
     have h4 : 6 * (n + L) + n * μ ≤ 140 * (n * L) := by omega
@@ -242,9 +243,9 @@ theorem sized_mono {J σ τ : Type} [Fintype J] [LinearOrder J] {N : Network J �
   abs_Ψ a b z z' hab := (h.abs_Ψ a b z z' hab).trans (pow_le_pow_right₀ (by norm_num) hB)
 
 /-- The right side of the bound on U of Step 3 of Appendix D before display (61), on g = 3K⁸ nodes,
-is at most `UbD`, for Δ ≥ 2, 2M ≤ 9n and 2M ≤ 7n if Δ ≥ 2^11. -/
-theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 9 * n) (hM7 : 2 ^ 11 ≤ Δ → 2 * M ≤ 7 * n) :
-    6 * ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) + 2 * k * M * lg (96 * Δ * lg (2 * scaleD Δ)) + 2 * ((3 * K ^ 8 : ℕ) : ℝ) ^ 2 ≤
+is at most `UbD`, for Δ ≥ 2, 2M ≤ 6n and 2M ≤ 5n if Δ ≥ 2^11. -/
+theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 6 * n) (hM7 : 2 ^ 11 ≤ Δ → 2 * M ≤ 5 * n) :
+    6 * ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) + 2 * k * M * lg (288 * Δ * lg (2 * scaleD Δ)) + 2 * ((3 * K ^ 8 : ℕ) : ℝ) ^ 2 ≤
       ((UbD k K n Δ : ℕ) : ℝ) := by
   have hΔ' : (2 : ℝ) ≤ Δ := by exact_mod_cast hΔ
   have h1 := lg_two_mul_le Δ
@@ -253,15 +254,15 @@ theorem ub_real (k K n : ℕ) {Δ M : ℕ} (hΔ : 2 ≤ Δ) (hM : 2 * M ≤ 9 * 
   have hs : 1 ≤ lg (2 * (scaleD Δ : ℝ)) := by
     rw [Ineq.lg_two_scaleD]
     linarith [Ineq.two_le_lg hΔ]
-  have h2 : lg (96 * Δ * lg (2 * scaleD Δ)) ≤ ((lgD Δ : ℕ) : ℝ) := by
+  have h2 : lg (288 * Δ * lg (2 * scaleD Δ)) ≤ ((lgD Δ : ℕ) : ℝ) := by
     unfold lgD
     refine le_trans (lg_mono (by positivity) ?_) (lg_le_clog _)
     push_cast
     gcongr
-  have h2' : 0 ≤ lg (96 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by nlinarith)
+  have h2' : 0 ≤ lg (288 * Δ * lg (2 * scaleD Δ)) := Real.logb_nonneg (by norm_num) (by nlinarith)
   have hk : ((k - 1 : ℕ) : ℝ) ≤ k := by exact_mod_cast Nat.sub_le k 1
   have hM' : 2 * (M : ℝ) * (lgD Δ : ℕ) ≤ (markH Δ : ℕ) * n := by exact_mod_cast mark_le hM hM7
-  have h3 : 2 * (M : ℝ) * lg (96 * Δ * lg (2 * scaleD Δ)) ≤ (markH Δ : ℕ) * n :=
+  have h3 : 2 * (M : ℝ) * lg (288 * Δ * lg (2 * scaleD Δ)) ≤ (markH Δ : ℕ) * n :=
     (mul_le_mul_of_nonneg_left h2 (by positivity)).trans hM'
   have p1 := mul_le_mul_of_nonneg_left h3 (Nat.cast_nonneg k : (0 : ℝ) ≤ k)
   have p2 : ((k - 1 : ℕ) : ℝ) * (n + lg (2 * Δ)) ≤ k * (n + LD Δ) :=
@@ -286,7 +287,7 @@ theorem small_le_PbD (K n Δ : ℕ) : 2 * (qv (3 * K ^ 8) n * (1 + Δ)) ≤ PbD 
 3K⁸ nodes, K > 0, for a list that is fit for an evaluation, the network of an admissible profile has
 size `PbD`,
 values of at most `BbD` bits and total at most `UbD`. For m > n̄ by the bound on U of Step 3 before
-display (61) (`StU`) and 2M ≤ 9n, by «The parameters» (`StSized`) and by s̄ < 32Δ·log(2Δ) (`ParamIneq`); for m
+display (61) (`StU`) and 2M ≤ 6n, by «The parameters» (`StSized`) and by s̄ < 96Δ·log(2Δ) (`ParamIneq`); for m
 ≤ n̄ by the last sentence
 of Step 3 (`StSmall`). -/
 theorem stSize (hp : VariableBound.ParamIneq) (hU : StU) (hS : StSized) (hs : StSmall) : StSize := by
@@ -298,11 +299,11 @@ theorem stSize (hp : VariableBound.ParamIneq) (hU : StU) (hS : StSized) (hs : St
     · have hsb : ∀ L ∈ D.2, (L.length : ℚ) ≤ (sbMax Δ : ℚ) := by
         intro L hL
         have hnb : (0 : ℝ) < nb := by exact_mod_cast nb_pos hF.isNb
-        have a : (L.length : ℝ) ≤ 16 * (D.1.length : ℝ) / nb := by
+        have a : (L.length : ℝ) ≤ 48 * (D.1.length : ℝ) / nb := by
           rw [le_div_iff₀ hnb, mul_comm]
           exact_mod_cast hrow L hL
         have b := (hp.sb_lt2 n Δ D.1.length nb hF.two hF.m_le hF.isNb).1
-        have c : 32 * (Δ : ℝ) * lg (2 * scaleD Δ) ≤ 32 * Δ * LD (scaleD Δ) := by
+        have c : 96 * (Δ : ℝ) * lg (2 * scaleD Δ) ≤ 96 * Δ * LD (scaleD Δ) := by
           have := lg_two_mul_le (scaleD Δ)
           gcongr
         have d : (L.length : ℝ) ≤ ((sbMax Δ : ℕ) : ℝ) := by

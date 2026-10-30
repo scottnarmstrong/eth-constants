@@ -15,12 +15,12 @@ the absence of every exponential subroutine inside the recursion.
 | Padded recursion overhead coefficient | `6*190+17 = 1157` |
 | Occurrence bound handed to the network, width 3, precision 4 | `Δ = 2^26`, reduced from `2^198` |
 | Inclusion–exclusion cutoff `n̄` | about `n/(128·log₂(2Δ))`, reduced from `n/log₂(2Δ)` |
-| Parity-check marks | `M ≤ 3.5n` for `Δ ≥ 2^11` and `4.5n` otherwise, reduced from `14n` |
+| Parity-check marks | `M ≤ 2.5n` for `Δ ≥ 2^11` and `3n` otherwise, reduced from `14n` |
 | Recursive exponent constant | `e_l ≤ 0.66 ρ^l` for `l ≥ 1`, reduced from 0.7 |
-| Sufficient selected level | 19 |
-| Logarithm to base two of the level-19 clique size | 28,311,400 |
-| Exact level threshold in variables | `2^481293800` |
-| Rounded sufficient threshold in variables | `10^145000000` |
+| Sufficient selected level | 18 |
+| Logarithm to base two of the level-18 clique size | 14,155,630 |
+| Exact level threshold in variables | `2^240645710` |
+| Rounded sufficient threshold in variables | `10^72500000` |
 
 The level schedule is unchanged apart from its starting parameter. The new
 precision rule is
@@ -40,34 +40,52 @@ $$
 \le [420(24s+103)+1]e_\ell+2^{-s}\lt 1.
 $$
 
-For levels 19 through 31, `s=4`, and the networks are given the occurrence
+For levels 18 through 31, `s=4`, and the networks are given the occurrence
 bound `Δ = 2^26` (see below). With `n̄` chosen for `scaleD Δ = 2^127·Δ^128`,
-a check has fewer than `32Δ·log₂(2·scaleD Δ)` clauses, so
+a check has fewer than `96Δ·log₂(2·scaleD Δ)` clauses, so
 
 $$
-\lceil\log_2(96\cdot 2^{26}\cdot3456)\rceil=45,
+\lceil\log_2(288\cdot 2^{26}\cdot3456)\rceil=46,
 $$
 
-each of the at most `3.5n` marks of the parity checks costs at most 45 bits at
+each of the at most `2.5n` marks of the parity checks costs at most 46 bits at
 each of its `k=3` tests, counted at both ends, and for `n >= 486`
 
 $$
-U=18(n+27)+21n\cdot45+18K^{16}
-\le964n+18K^{16}.
+U\le18(n+27)+15n\cdot46+18K^{16}
+\le709n+18K^{16}.
 $$
 
 `SATNeed.ubD_precision_four_le` proves this inequality. The generalized helper
 `SATNeed.needD_le_of_ub` propagates it to the complete budget estimate
 
 $$
-\frac{\mathrm{needD}}n\le965e_\ell+\frac1{16}<1.
+\frac{\mathrm{needD}}n\le710e_\ell+\frac1{16}<1.
 $$
 
 `SAT.e_tight` proves `e_l ≤ 0.66 ρ^l` for `l ≥ 1`; the limit of `e_l/ρ^l` is
-about 0.645. With `ρ^19 = ρ·2^-9 ≤ 0.7072·2^-9`, the expression at level 19 is
-at most `965·0.66·0.7072·2^-9 + 1/16`, approximately 0.942; with the exact
-recurrence it is about 0.922. The earlier estimate remains in use from level 32 onward,
-where the precision eventually increases.
+about 0.645. Since `ρ^18 = 2^-9`, the expression at level 18 is
+at most `710·0.66·2^-9 + 1/16 = 0.977734375 < 1`. Direct interval evaluation
+of the recurrence gives about 0.957. The earlier estimate remains in use
+from level 32 onward, where the precision eventually increases.
+
+## Threefold XOR amplification
+
+Replace each check by the XOR of three independently indexed original checks.
+If the original probability of an odd intersection is `p ≥ 1/4`, the new
+probability is `(1-(1-2p)^3)/2 ≥ 7/16`. This inequality holds for the whole
+interval `1/4 ≤ p ≤ 1`, including `p > 1/2`.
+`VariableBound.Amplify.triple_bounds` checks detection, size and incidence:
+each check has at most `48m/n̄` clauses, and each clause occurs in at most
+`48/(15n̄)` of the indexed family. Repeated checks are allowed; the indices
+carry the uniform distribution.
+
+The executable `famAmpD` enumerates all triples, takes their XOR by filtering
+clause numbers, and returns ordered lists without duplicates within each
+check. `famAmpD_isFamily` and `famAmpD_poly` prove its specification and
+polynomial-time certificate. Its family-size bound is `(32m)^12`, compared
+with `(32m)^4` previously. The selection potential now uses `16/9` instead of
+`4/3`, and `r̄` is the least integer with `9^r̄·2^β < 16^r̄`.
 
 ## The occurrence bound
 
@@ -90,8 +108,8 @@ marks `M = r̄ + β − 1`. Inclusion–exclusion is cut off at `n̄` marked cla
 and `β` grows with `n̄`. The paper takes `n̄` to be the power of two with
 `n/(2 log₂ 2Δ) < n̄ ≤ n/log₂ 2Δ`; the program now computes it for
 `scaleD Δ = 2^127·Δ^128`, so that `n/(256 log₂ 2Δ) < n̄ ≤ n/(128 log₂ 2Δ)`. A
-check then has fewer than `32Δ·log₂(2·scaleD Δ) = 4096Δ·log₂(2Δ)` clauses,
-which costs 7 more bits per mark. With `L = log₂(2Δ)`,
+check then has fewer than `96Δ·log₂(2·scaleD Δ) = 12288Δ·log₂(2Δ)` clauses,
+which includes both the smaller inclusion–exclusion cutoff and the larger XOR checks. With `L = log₂(2Δ)`,
 
 $$
 \log_2\frac{3m}{\bar n+1}\le\log_2(6\Delta\cdot128L)=L+\log_2(384L),
@@ -99,21 +117,21 @@ $$
 $$
 
 whenever `L + log₂(384L) ≤ cL` (`VariableBound.Ineq.beta_le_scaled`): `c = 6`
-for every `Δ ≥ 2`, and `c = 2.1` for `Δ ≥ 2^11`. With `r̄ ≤ 2.41β + 1` this
-gives `2M ≤ 9n`, and `2M ≤ 7n` for `Δ ≥ 2^11`, when `n ≥ 256L + 19`
+for every `Δ ≥ 2`, and `c = 2.1` for `Δ ≥ 2^11`. With `r̄ ≤ 1.21β + 1` this
+gives `2M ≤ 6n`, and `2M ≤ 5n` for `Δ ≥ 2^11`, when `n ≥ 256L + 19`
 (`VariableBound.Ineq.large_half`). The plan's guard is correspondingly
 `n ≥ 256·⌈log₂(2Δ)⌉ + 19`, in place of `29·⌈log₂(2Δ)⌉ + 19`, which also makes
 `n̄ ≥ 2`. The budget function charges `kn·markH(Δ)` bits for the marks, where
 
 $$
-\mathrm{markH}(\Delta)=\max\bigl(7\,\mathrm{lgD}(\Delta),\;9\,\mathrm{lgD}(\min(\Delta,2^{11}))\bigr),
-\qquad \mathrm{lgD}(\Delta)=\lceil\log_2(96\Delta\lceil\log_2(2\cdot\mathrm{scaleD}\,\Delta)\rceil)\rceil;
+\mathrm{markH}(\Delta)=\max\bigl(5\,\mathrm{lgD}(\Delta),\;6\,\mathrm{lgD}(\min(\Delta,2^{11}))\bigr),
+\qquad \mathrm{lgD}(\Delta)=\lceil\log_2(288\Delta\lceil\log_2(2\cdot\mathrm{scaleD}\,\Delta)\rceil)\rceil;
 $$
 
 the cut-off argument keeps it increasing in `Δ`.
 
 The lower-order estimates of the upstream proof grow with the larger checks:
-for example `g·P ≤ n·2^β·(107012(β+3) + 4·size n)` in place of `842(β+3)`.
+for example `g·P ≤ n·2^β·(319492(β+3) + 4·size n)` in place of `842(β+3)`.
 These enter only terms that are negligible beside `n` at the cutoff.
 
 ## Other quantitative results
@@ -143,7 +161,7 @@ being below `n` does not show that the resulting Turing machine runs faster
 than brute force: a polynomial simulation raises the padded cost to a power,
 and that degree and its constants are not explicit here.
 
-At level 18 the improved budget expression is about 1.278, even when the
+At level 17 the improved budget expression is about 1.327, even when the
 recurrence is evaluated tightly and the smallest permitted precision is used.
 See [the next targets](NEXT_STEPS.md) for a quantitative assessment, including
 the proposed threshold of `10^100000` variables. These are limitations of the

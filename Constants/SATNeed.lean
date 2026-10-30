@@ -117,24 +117,24 @@ theorem needD_le_exact (hU : StUbD) (hA : StArgD) (hL : StLowerD) (hB : StBetaU)
   simpa only [Nat.cast_add, Nat.cast_one] using h
 
 /-- At width three and precision four the networks are given Δ = 2^26, Calabro's occurrence bound
-rounded up; with n̄ chosen for `scaleD Δ` a mark costs 45 bits, and there are at most 3.5n marks. -/
+rounded up; with n̄ chosen for `scaleD Δ` a mark costs 46 bits, and there are at most 2.5n marks. -/
 theorem betaD_three_four : betaD 3 4 = 26 := by
   unfold betaD alpha3
   simp only [show (3 : ℕ) ≤ 3 from le_rfl, if_true]
   decide
 
 theorem ubD_precision_four_le (K n : ℕ) (hn : 486 ≤ n) :
-    UbD 3 K n (2 ^ betaD 3 4) ≤ 964 * n + 18 * K ^ 16 := by
-  have h1 : lgD (2 ^ 26) = 45 := by
+    UbD 3 K n (2 ^ betaD 3 4) ≤ 709 * n + 18 * K ^ 16 := by
+  have h1 : lgD (2 ^ 26) = 46 := by
     unfold lgD
     rw [VariableBound.ArithNat.LD_scaleD_pow]
     decide
-  have h2 : lgD (min (2 ^ 26) (2 ^ 11)) = 29 := by
+  have h2 : lgD (min (2 ^ 26) (2 ^ 11)) = 30 := by
     rw [min_eq_right (by norm_num)]
     unfold lgD
     rw [VariableBound.ArithNat.LD_scaleD_pow]
     decide
-  have hm : markH (2 ^ 26) = 315 := by
+  have hm : markH (2 ^ 26) = 230 := by
     unfold markH
     rw [h1, h2]
     decide
